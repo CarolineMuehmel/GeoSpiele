@@ -230,6 +230,66 @@ table.opt td:last-child { text-align: right; font-family: var(--f-mono); }
 .found-list span.miss { background: color-mix(in srgb, var(--bad) 22%, transparent); }
 .us-label { font: 600 9px var(--f-body); fill: #fff; pointer-events: none; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; }
 
+/* duel */
+.duel-btn { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; font-size: 13px; }
+.duel-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.duel-btn.on .dot { background: var(--ok); }
+.duelbar { border-top: 1px solid var(--line); background: var(--panel); }
+.duelbar-in { max-width: 1120px; margin: 0 auto; padding: 8px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: 14px; }
+.duelbar .who { display: grid; gap: 1px; font-variant-numeric: tabular-nums; }
+.duelbar .who small { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.duelbar .vs { font: 800 13px/1 var(--f-display); color: var(--muted); }
+.duelbar .outcome { font: 800 17px/1 var(--f-display); }
+.duelbar .outcome.win { color: var(--ok); } .duelbar .outcome.loss { color: var(--bad); }
+.live { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); flex-shrink: 0; animation: pulse 1.8s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(6, 12, 15, .55); }
+.modal-card { width: min(560px, 100%); max-height: 100%; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; box-shadow: var(--shadow); }
+.modal-card h2 { font-size: 26px; font-weight: 800; }
+.modal-card h3 { font-size: 16px; }
+.modal-card p { margin: 0; color: var(--muted); }
+.field { display: grid; gap: 5px; font-size: 13px; font-weight: 600; }
+.field input { width: 100%; padding: 10px 12px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--paper); font-size: 16px; font-weight: 400; }
+.field input:focus { border-color: var(--teal); outline: none; }
+.duel-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.duel-cols > div { display: grid; gap: 8px; align-content: start; padding: 14px; border: 1px solid var(--line); border-radius: 12px; }
+.duel-code { font: 800 46px/1 var(--f-display); letter-spacing: .14em; text-align: center; padding: 16px; background: var(--sea); border-radius: 12px; }
+.linkrow { display: flex; gap: 8px; }
+.linkrow input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); font: 400 12px var(--f-mono); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.err { color: var(--bad); font-size: 14px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.result .big { animation: pop .7s cubic-bezier(.2, 1.5, .4, 1); }
+.result .verdict { font: 800 26px/1.1 var(--f-display); }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } }
+
+/* stats */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+.tile span, .kv span { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.tile b { font: 800 32px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.statgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 14px; }
+.statcard { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; align-content: start; }
+.statcard .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.statcard h3 { font-size: 20px; }
+.statcard a { color: var(--teal); font-size: 13px; font-weight: 600; text-decoration: none; }
+.kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.kv div { display: grid; gap: 4px; }
+.kv b { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.spark { display: flex; align-items: flex-end; gap: 3px; height: 44px; padding-bottom: 1px; border-bottom: 1px solid var(--line); }
+.spark i { flex: 1; max-width: 22px; background: var(--teal); border-radius: 2px 2px 0 0; min-height: 2px; }
+.spark i.duel { background: var(--accent); }
+.hist { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.hist li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.hist li:first-child { border-top: 0; }
+.hist time { color: var(--muted); font: 400 11px var(--f-mono); white-space: nowrap; }
+.pill { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .05em; padding: 3px 6px; border-radius: 5px; margin-left: 6px; }
+.pill.win { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.pill.loss { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+.pill.draw { background: var(--sea); color: var(--muted); }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+
 @media (max-width: 860px) {
   .gg-wrap, .rk { grid-template-columns: minmax(0, 1fr); }
 }
@@ -241,6 +301,8 @@ table.opt td:last-child { text-align: right; font-family: var(--f-mono); }
   .gg .hd { font-size: 11px; padding: 2px; }
   .cell .lbl { font-size: 10px; }
   .brand span { display: none; }
+  .duel-cols { grid-template-columns: minmax(0, 1fr); }
+  .duel-btn { padding: 6px 9px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
@@ -258,13 +320,20 @@ table.opt td:last-child { text-align: right; font-family: var(--f-mono); }
       <a href="#grid">Geo-Grid</a>
       <a href="#rankle">Rankle</a>
       <a href="#usa">USA</a>
+      <a href="#statistik">Statistik</a>
     </nav>
+    <button class="btn duel-btn" id="duel-open" type="button"><i class="dot"></i>1:1 Duell</button>
   </div>
+  <div class="duelbar" id="duelbar" hidden></div>
 </header>
+<div class="modal" id="duel-modal" hidden><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="duel-title" id="duel-card"></div></div>
+<div class="toast" id="toast" hidden></div>
 <main id="app"><div class="loading">Karten werden geladen …</div></main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script>
 (async function () {
 'use strict';
@@ -420,10 +489,183 @@ function outlineSvg(code, size = 400, cls = 'silhouette') {
   return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Umriss eines Landes"><path class="${cls}" d="${d3.geoPath(proj)(geo)}"/></svg>`;
 }
 
+/* ---------- results, stats, confetti ---------- */
+const GAMES = { flaggen: 'Flaggen', karte: 'Weltkarte', umriss: 'Umrisse', grid: 'Geo-Grid', rankle: 'Rankle', usa: 'USA-Staaten' };
+function celebrate(pct = 100) {
+  if (!window.confetti || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const n = 60 + Math.round(pct * 1.6);
+  confetti({ particleCount: n, spread: 80, startVelocity: 42, origin: { y: 0.65 }, zIndex: 70 });
+  setTimeout(() => {
+    confetti({ particleCount: Math.round(n / 2), angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, zIndex: 70 });
+    confetti({ particleCount: Math.round(n / 2), angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, zIndex: 70 });
+  }, 250);
+}
+function recordResult(g, pct, label) {
+  const h = store.get('history', []);
+  const e = { g, pct: Math.max(0, Math.min(100, Math.round(pct))), label, t: Date.now() };
+  h.push(e); store.set('history', h.slice(-400));
+  if (inDuel(g)) duel.entry = e.t;
+  return e;
+}
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.tm); toast.tm = setTimeout(() => { t.hidden = true; }, 3500);
+}
+
+/* ---------- 1:1 Duell: browser-to-browser via PeerJS ---------- */
+const duel = { peer: null, conn: null, code: null, host: false, oppName: '', game: null, seed: 0, settings: {}, me: null, opp: null, t0: 0, entry: null, decided: false };
+const connected = () => !!(duel.conn && duel.conn.open);
+const inDuel = g => connected() && duel.game === g;
+const duelRnd = (salt = 0) => mulberry((duel.seed ^ Math.imul(salt + 1, 0x9E3779B1)) >>> 0);
+const myName = () => store.get('name', '') || 'Gast';
+const send = m => { if (connected()) duel.conn.send(m); };
+const settingsFor = g => ['flaggen', 'karte', 'umriss', 'usa'].includes(g) ? store.get(g + ':settings', {}) : {};
+function duelReport(g, data) {
+  if (!inDuel(g)) return;
+  if (data.done) data.ms = Date.now() - duel.t0;
+  duel.me = data; send({ type: 'progress', game: g, seed: duel.seed, data }); renderDuelBar();
+}
+function newRound(g = duel.game) {
+  Object.assign(duel, { game: g, seed: Math.floor(Math.random() * 2 ** 31), settings: settingsFor(g), me: null, opp: null, decided: false, entry: null });
+  send({ type: 'start', game: g, seed: duel.seed, settings: duel.settings });
+  goTo(g);
+}
+function goTo(g) { if (location.hash === '#' + g) route(); else location.hash = g; }
+function outcome() {
+  const a = duel.me, b = duel.opp;
+  if (!a?.done || !b?.done) return null;
+  for (let i = 0; i < a.cmp.length; i++) if (a.cmp[i] !== b.cmp[i]) return { r: a.cmp[i] > b.cmp[i] ? 'win' : 'loss' };
+  if (a.ms !== b.ms) return { r: a.ms < b.ms ? 'win' : 'loss', time: true };
+  return { r: 'draw' };
+}
+function renderDuelBar() {
+  const bar = document.getElementById('duelbar');
+  document.getElementById('duel-open').classList.toggle('on', connected());
+  if (!connected()) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const opp = esc(duel.oppName || 'Gegner');
+  const here = location.hash.slice(1);
+  let mid;
+  if (!duel.game || here !== duel.game) {
+    mid = `<span>Verbunden mit <b>${opp}</b>. ${duel.game && GAMES[duel.game] ? `Aktuelles Spiel: <a href="#${duel.game}">${GAMES[duel.game]}</a>. ` : ''}Wer oben ein Spiel öffnet, startet es für euch beide.</span>`;
+  } else {
+    const o = outcome();
+    const lbl = d => d ? esc(d.label || '') + (d.done ? ' ✓' : '') : 'startet …';
+    mid = `<div class="who"><small>Du</small><span>${lbl(duel.me)}</span></div><span class="vs">VS</span><div class="who"><small>${opp}</small><span>${lbl(duel.opp)}</span></div>`;
+    if (o) mid += `<span class="outcome ${o.r}">${o.r === 'win' ? 'Du gewinnst!' : o.r === 'loss' ? `${opp} gewinnt` : 'Unentschieden'}${o.time ? ' (schneller)' : ''}</span>`;
+    else if (duel.me?.done) mid += `<span class="who"><small>Status</small><span>Warte auf ${opp} …</span></span>`;
+    if (o && !duel.decided) {
+      duel.decided = true;
+      if (o.r === 'win') celebrate(100);
+      const h = store.get('history', []); const e = h.find(x => x.t === duel.entry);
+      if (e) { e.duel = o.r; e.opp = duel.oppName; store.set('history', h); }
+    }
+  }
+  bar.innerHTML = `<div class="duelbar-in"><span class="live" aria-hidden="true"></span>${mid}<span class="spacer"></span>${duel.game && here === duel.game ? '<button class="btn sm" id="duel-again">Neue Runde für beide</button>' : ''}<button class="btn ghost sm" id="duel-leave">Duell beenden</button></div>`;
+  const again = document.getElementById('duel-again'); if (again) again.onclick = () => newRound(duel.game);
+  document.getElementById('duel-leave').onclick = () => { send({ type: 'bye' }); endDuel('Duell beendet.'); };
+}
+function endDuel(msg) {
+  const wasIn = duel.game && location.hash.slice(1) === duel.game;
+  try { duel.conn && duel.conn.close(); } catch {}
+  try { duel.peer && duel.peer.destroy(); } catch {}
+  Object.assign(duel, { peer: null, conn: null, code: null, game: null, me: null, opp: null });
+  renderDuelBar(); if (msg) toast(msg);
+  if (wasIn) route();
+}
+function onMsg(m) {
+  if (!m || typeof m !== 'object') return;
+  if (m.type === 'hello') {
+    duel.oppName = String(m.name || 'Gast').slice(0, 24);
+    closeModal(); toast(`Verbunden mit ${duel.oppName}!`); renderDuelBar();
+    if (duel.host && GAMES[location.hash.slice(1)]) newRound(location.hash.slice(1));
+  } else if (m.type === 'start' && GAMES[m.game]) {
+    closeModal();
+    Object.assign(duel, { game: m.game, seed: m.seed >>> 0, settings: m.settings || {}, me: null, opp: null, decided: false, entry: null });
+    const s = m.settings || {}; if (Object.keys(s).length) store.set(m.game + ':settings', Object.assign(store.get(m.game + ':settings', {}), s));
+    goTo(m.game);
+  } else if (m.type === 'progress' && m.game === duel.game && m.seed === duel.seed) {
+    duel.opp = m.data; renderDuelBar();
+  } else if (m.type === 'bye') endDuel(`${duel.oppName || 'Dein Gegner'} hat das Duell verlassen.`);
+}
+function setupConn(conn) {
+  duel.conn = conn;
+  const timer = setTimeout(() => { if (!conn.open) failDuel('Die Verbindung kommt nicht zustande. Manche Netzwerke (z. B. Firmen- oder Schul-WLAN) blockieren direkte Verbindungen. Versucht es im Mobilfunknetz oder einem anderen WLAN.'); }, 15000);
+  conn.on('open', () => { clearTimeout(timer); conn.send({ type: 'hello', name: myName() }); });
+  conn.on('data', onMsg);
+  conn.on('close', () => { if (duel.conn === conn) endDuel('Die Verbindung wurde getrennt.'); });
+}
+function newPeer(id) {
+  if (!window.Peer) throw new Error('nopeer');
+  return id ? new Peer(id) : new Peer();
+}
+function failDuel(text) {
+  try { duel.peer && duel.peer.destroy(); } catch {}
+  Object.assign(duel, { peer: null, conn: null });
+  renderDuelBar(); modal('error', text);
+}
+const peerErr = e => e && e.type === 'peer-unavailable' ? 'Zu diesem Code gibt es kein offenes Duell. Prüfe den Code oder lass dir einen neuen schicken.'
+  : 'Der Duell-Server ist gerade nicht erreichbar. Prüfe deine Internetverbindung. In der Claude-Vorschau funktionieren Duelle nicht, nutze dafür die GitHub-Seite.';
+function hostDuel() {
+  const code = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+  let peer; try { peer = newPeer('atlasjagd-duell-' + code); } catch { return modal('error', peerErr()); }
+  duel.peer = peer; duel.host = true; modal('connecting', 'Code wird erstellt …');
+  peer.on('open', () => { if (connected() || duel.code) return; duel.code = code; modal('wait'); });
+  peer.on('connection', conn => { if (connected()) { conn.close(); return; } setupConn(conn); });
+  peer.on('error', e => { if (e.type === 'unavailable-id') { peer.destroy(); hostDuel(); } else if (!connected()) failDuel(peerErr(e)); });
+}
+function joinDuel(code) {
+  code = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5) return modal('menu', 'Der Code hat 5 Zeichen.');
+  let peer; try { peer = newPeer(); } catch { return modal('error', peerErr()); }
+  duel.peer = peer; duel.host = false; modal('connecting', 'Verbinde mit dem Duell …');
+  peer.on('open', () => setupConn(peer.connect('atlasjagd-duell-' + code, { reliable: true })));
+  peer.on('error', e => { if (!connected()) failDuel(peerErr(e)); });
+}
+function closeModal() { document.getElementById('duel-modal').hidden = true; }
+function modal(state, info = '') {
+  const m = document.getElementById('duel-modal'), c = document.getElementById('duel-card');
+  m.hidden = false;
+  const cancel = '<div class="modal-actions"><button class="btn ghost" id="dm-cancel">Abbrechen</button></div>';
+  if (state === 'menu') {
+    c.innerHTML = `<h2 id="duel-title">1:1 Duell</h2>
+      <p>Spiel live gegen jemanden auf einem anderen Gerät. Ihr bekommt genau dieselben Fragen. Wer mehr richtig hat, gewinnt. Bei Gleichstand entscheidet die Zeit.</p>
+      <label class="field">Dein Name<input id="dm-name" maxlength="24" autocomplete="nickname" value="${esc(store.get('name', ''))}" placeholder="z. B. Caro"></label>
+      <div class="duel-cols">
+        <div><h3>Duell erstellen</h3><p>Du bekommst einen Code, den du weitergibst.</p><button class="btn primary" id="dm-host">Code erstellen</button></div>
+        <div><h3>Duell beitreten</h3><label class="field">Code<input id="dm-code" maxlength="5" autocomplete="off" spellcheck="false" placeholder="K7F2Q" value="${esc(info && info.length === 5 ? info : '')}" style="text-transform:uppercase;letter-spacing:.1em"></label><button class="btn" id="dm-join">Beitreten</button></div>
+      </div>${info && info.length !== 5 ? `<p class="err">${esc(info)}</p>` : ''}
+      <div class="modal-actions"><button class="btn ghost" id="dm-cancel">Schließen</button></div>`;
+    const saveName = () => store.set('name', document.getElementById('dm-name').value.trim().slice(0, 24));
+    document.getElementById('dm-host').onclick = () => { saveName(); hostDuel(); };
+    document.getElementById('dm-join').onclick = () => { saveName(); joinDuel(document.getElementById('dm-code').value); };
+    document.getElementById('dm-code').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('dm-join').click(); });
+    document.getElementById(info && info.length === 5 ? 'dm-join' : 'dm-name').focus();
+  } else if (state === 'wait') {
+    const link = /^https?:$/.test(location.protocol) ? `${location.origin}${location.pathname}?duell=${duel.code}` : '';
+    c.innerHTML = `<h2 id="duel-title">Dein Duell-Code</h2><div class="duel-code">${duel.code}</div>
+      <p>Schick den Code an deine Mitspielerin oder deinen Mitspieler. Sie oder er tippt auf <b>1:1 Duell</b> und gibt ihn unter „Beitreten“ ein.${link ? ' Oder du schickst direkt diesen Link:' : ''}</p>
+      ${link ? `<div class="linkrow"><input id="dm-link" readonly value="${esc(link)}"><button class="btn" id="dm-copy">Kopieren</button></div>` : ''}
+      <p style="display:flex;gap:10px;align-items:center"><span class="live"></span>Warte auf Mitspieler …</p>${cancel}`;
+    const cp = document.getElementById('dm-copy');
+    if (cp) cp.onclick = () => { const i = document.getElementById('dm-link'); navigator.clipboard?.writeText(i.value).then(() => { cp.textContent = 'Kopiert'; }, () => { i.select(); }); if (!navigator.clipboard) i.select(); };
+  } else if (state === 'connecting') {
+    c.innerHTML = `<h2 id="duel-title">1:1 Duell</h2><p style="display:flex;gap:10px;align-items:center"><span class="live"></span>${esc(info)}</p>${cancel}`;
+  } else {
+    c.innerHTML = `<h2 id="duel-title">Das hat nicht geklappt</h2><p class="err">${esc(info)}</p><div class="modal-actions"><button class="btn ghost" id="dm-cancel">Schließen</button><button class="btn primary" id="dm-back">Nochmal versuchen</button></div>`;
+    document.getElementById('dm-back').onclick = () => modal('menu');
+  }
+  document.getElementById('dm-cancel').onclick = () => { if (!connected()) { try { duel.peer && duel.peer.destroy(); } catch {} duel.peer = null; } closeModal(); };
+}
+document.getElementById('duel-open').onclick = () => { if (connected()) toast(`Du bist mit ${duel.oppName} verbunden. Beenden geht über die Leiste oben.`); else modal('menu'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('duel-modal').hidden) document.getElementById('dm-cancel')?.click(); });
+window.addEventListener('beforeunload', () => send({ type: 'bye' }));
+
 /* ---------- quiz engine (Flaggen, Weltkarte, Umrisse) ---------- */
 function quiz(cfg) {
   const key = cfg.key;
-  const st = Object.assign({ cont: 'ALL', len: 10, answer: 'type' }, store.get(key + ':settings', {}));
+  const st = Object.assign({ cont: 'ALL', len: 10, answer: 'type' }, store.get(key + ':settings', {}), inDuel(key) ? duel.settings : {});
+  const restart = () => inDuel(key) ? newRound(key) : start();
   let queue, idx, score, streak, wrong, phase, current, choicesEl, ac;
   const best = () => store.get(key + ':best', 0);
 
@@ -458,15 +700,15 @@ function quiz(cfg) {
   const syncSeg = () => segBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.a === st.answer)));
   syncSeg();
   const save = () => store.set(key + ':settings', st);
-  $s('q-cont').onchange = e => { st.cont = e.target.value; save(); start(); };
-  $s('q-len').onchange = e => { st.len = +e.target.value; save(); start(); };
+  $s('q-cont').onchange = e => { st.cont = e.target.value; save(); restart(); };
+  $s('q-len').onchange = e => { st.len = +e.target.value; save(); restart(); };
   segBtns.forEach(b => b.onclick = () => { st.answer = b.dataset.a; save(); syncSeg(); if (phase === 'ask') renderDock(); });
-  $s('q-restart').onclick = start;
+  $s('q-restart').onclick = restart;
   if (cfg.setup) cfg.setup($s('q-stage'));
 
   function pool() { return cfg.pool.filter(c => st.cont === 'ALL' || c.cont === st.cont); }
   function start() {
-    const p = shuffle(pool());
+    const p = shuffle(pool(), inDuel(key) ? duelRnd(0) : Math.random);
     queue = st.len ? p.slice(0, st.len) : p; idx = 0; score = 0; streak = 0; wrong = [];
     ask();
   }
@@ -476,6 +718,7 @@ function quiz(cfg) {
   }
   function ask() {
     phase = 'ask'; current = queue[idx]; updateStats();
+    duelReport(key, { label: `Frage ${idx + 1}/${queue.length} · ${score} Pkt.` });
     cfg.show($s('q-stage'), current);
     renderDock();
   }
@@ -483,9 +726,10 @@ function quiz(cfg) {
     const dock = $s('q-dock');
     if (st.answer === 'mc') {
       const p = pool();
-      let others = shuffle(p.filter(c => c !== current && c.cont === current.cont)).slice(0, 3);
-      if (others.length < 3) others = others.concat(shuffle(countries.filter(c => c !== current && !others.includes(c))).slice(0, 3 - others.length));
-      const opts = shuffle([current, ...others]);
+      const rnd = inDuel(key) ? duelRnd(idx + 1) : Math.random;
+      let others = shuffle(p.filter(c => c !== current && c.cont === current.cont), rnd).slice(0, 3);
+      if (others.length < 3) others = others.concat(shuffle(countries.filter(c => c !== current && !others.includes(c)), rnd).slice(0, 3 - others.length));
+      const opts = shuffle([current, ...others], rnd);
       dock.innerHTML = `<div class="choices">${opts.map(o => `<button data-c="${o.code}">${esc(o.name)}</button>`).join('')}</div>
         <div class="answer-row"><span class="spacer"></span><button class="btn ghost" id="q-skip">Weiß ich nicht</button></div>`;
       choicesEl = dock.querySelector('.choices');
@@ -504,6 +748,7 @@ function quiz(cfg) {
     if (ok) { score++; streak++; if (streak > best()) store.set(key + ':best', streak); }
     else { streak = 0; wrong.push(current); }
     updateStats();
+    duelReport(key, { label: `Frage ${idx + 1}/${queue.length} · ${score} Pkt.` });
     cfg.reveal && cfg.reveal($s('q-stage'), current, guess, ok);
     const dock = $s('q-dock');
     if (st.answer === 'mc' && choicesEl) {
@@ -524,14 +769,18 @@ function quiz(cfg) {
   function finish() {
     phase = 'done'; idx = queue.length;
     const pct = Math.round(score / queue.length * 100);
+    duelReport(key, { done: true, cmp: [score], label: `${score}/${queue.length} richtig` });
+    recordResult(key, pct, `${score}/${queue.length}`);
     $s('q-stage').innerHTML = `<div class="result">
-      <div class="coords">${pct >= 90 ? 'Kartograf·in' : pct >= 60 ? 'Weltreisende·r' : 'Entdecker·in'}</div>
+      <div class="verdict">${pct === 100 ? 'Perfekt!' : pct >= 80 ? 'Stark!' : pct >= 50 ? 'Gut gemacht!' : 'Weiter üben!'}</div>
+      <div class="coords">${pct}% richtig · ${pct >= 90 ? 'Kartograf·in' : pct >= 60 ? 'Weltreisende·r' : 'Entdecker·in'}</div>
       <div class="big">${score}<small> / ${queue.length}</small></div>
       ${wrong.length ? `<div>Diese hast du verpasst:</div><div class="mistakes">${wrong.map(c => `<span><img src="${c.flagUrl}" alt="">${esc(c.name)}</span>`).join('')}</div>` : '<div>Alles richtig. Stark!</div>'}
       <button class="btn primary" id="q-again">Nochmal spielen</button></div>`;
     $s('q-dock').innerHTML = '';
-    document.getElementById('q-again').onclick = start;
+    document.getElementById('q-again').onclick = restart;
     document.getElementById('q-again').focus({ preventScroll: true });
+    celebrate(pct);
   }
   start();
 }
@@ -599,7 +848,7 @@ function home() {
       <a class="mode" href="#umriss"><div class="thumb" style="padding:14px">${outlineSvg('IT', 300)}</div>
         <div class="body"><div class="row"><h2>Umrisse</h2><span class="tag">Nur die Form</span></div><p>Kein Kontext, keine Nachbarn. Nur die Silhouette.</p></div></a>
       <a class="mode" href="#grid"><div class="thumb"><div class="minigrid">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => { const f = [0, 4, 5, 7].indexOf(i); return `<span style="${f >= 0 ? `background-image:url('${gridFlags[f].flagUrl}')` : ''}"></span>`; }).join('')}</div></div>
-        <div class="body"><div class="row"><h2>Geo-Grid</h2><span class="tag">Tägliches Rätsel</span></div><p>3×3 Felder, zwei Bedingungen pro Feld, neun Versuche.</p></div></a>
+        <div class="body"><div class="row"><h2>Geo-Grid</h2><span class="tag">Tägliches Rätsel</span></div><p>3×3 Felder, zwei Bedingungen pro Feld, zwölf Versuche.</p></div></a>
       <a class="mode" href="#rankle"><div class="thumb"><div class="minirank"><div>Einwohner <b>#2</b></div><div>Fläche <b>#7</b></div><div>Lebenserwartung <b>#14</b></div></div></div>
         <div class="body"><div class="row"><h2>Rankle</h2><span class="tag">8 Länder · 8 Kategorien</span></div><p>Ordne jedes Land der Kategorie zu, in der es am weitesten vorne liegt.</p></div></a>
       <a class="mode" href="#usa"><div class="thumb"><svg viewBox="-60 -10 1040 640">${usStates.filter(s => s.properties.name !== 'District of Columbia').map(s => `<path class="st${s.properties.name === 'Texas' ? ' target' : ''}" d="${usPath(s)}"/>`).join('')}</svg></div>
@@ -678,12 +927,12 @@ async function geoGrid() {
 
   app.innerHTML = `
     <div class="game-head">
-      <div><h1>Geo-Grid</h1><p>Finde für jedes Feld ein Land, das zur Zeile und zur Spalte passt. Jedes Land darf nur einmal vorkommen. Du hast neun Versuche.</p></div>
+      <div><h1>Geo-Grid</h1><p>Finde für jedes Feld ein Land, das zur Zeile und zur Spalte passt. Jedes Land darf nur einmal vorkommen. Du hast zwölf Versuche.</p></div>
       <div class="stats"><div class="stat"><span>Richtig</span><b id="g-right">0/9</b></div><div class="stat"><span>Seltenheit</span><b id="g-rare">–</b></div></div>
     </div>
     <div class="controls">
       <div class="seg" role="group" aria-label="Rätselart"><button data-m="daily">Rätsel des Tages</button><button data-m="random">Zufälliges Rätsel</button></div>
-      <span class="spacer"></span><button class="btn ghost" id="g-new">Neues Rätsel</button><button class="btn ghost" id="g-give">Aufgeben</button>
+      <span class="spacer"></span><button class="btn ghost" id="g-give">Aufgeben</button><button class="btn primary" id="g-new">Neues Rätsel ↻</button>
     </div>
     <div class="gg-wrap">
       <div class="gg" id="g-grid"></div>
@@ -694,15 +943,15 @@ async function geoGrid() {
     </div>`;
   const segs = app.querySelectorAll('.seg button');
   segs.forEach(b => b.onclick = () => { mode = b.dataset.m; newPuzzle(); });
-  document.getElementById('g-new').onclick = () => { mode = 'random'; newPuzzle(); };
+  document.getElementById('g-new').onclick = () => { if (inDuel('grid')) return newRound('grid'); mode = 'random'; newPuzzle(); };
+  if (inDuel('grid')) app.querySelector('.seg').hidden = true;
   document.getElementById('g-give').onclick = () => { if (!over) end(); };
 
   function newPuzzle() {
     segs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
-    document.getElementById('g-new').hidden = mode === 'daily';
-    const rnd = mulberry(mode === 'daily' ? dayKey : Math.floor(Math.random() * 1e9));
+    const rnd = inDuel('grid') ? duelRnd(0) : mulberry(mode === 'daily' ? dayKey : Math.floor(Math.random() * 1e9));
     puzzle = makePuzzle(rnd);
-    filled = Array(9).fill(null); guesses = 9; used = new Set(); active = null; over = false;
+    filled = Array(9).fill(null); guesses = 12; used = new Set(); active = null; over = false;
     render();
     panelIdle();
   }
@@ -733,6 +982,7 @@ async function geoGrid() {
     const right = filled.filter(Boolean).length;
     document.getElementById('g-right').textContent = `${right}/9`;
     document.getElementById('g-rare').textContent = right ? filled.reduce((s, f) => s + (f ? f.pct : 100), 0) : '–';
+    if (!over) duelReport('grid', { label: `${right}/9 Felder · ${guesses} Versuche übrig` });
   }
   function panelIdle(msg = '') {
     document.getElementById('g-panel').innerHTML = `<h3>Feld auswählen</h3><p>Tippe auf ein leeres Feld und suche dann ein passendes Land.</p>${msg ? `<p class="msg ok" style="margin-top:8px">${msg}</p>` : ''}`;
@@ -763,6 +1013,9 @@ async function geoGrid() {
   function end() {
     over = true; active = null; render();
     const right = filled.filter(Boolean).length, score = filled.reduce((s, f) => s + (f ? f.pct : 100), 0);
+    duelReport('grid', { done: true, cmp: [right, -score], label: `${right}/9 Felder · Seltenheit ${score}` });
+    recordResult('grid', right / 9 * 100, `${right}/9 Felder · Seltenheit ${score}`);
+    celebrate(right / 9 * 100);
     document.getElementById('g-panel').innerHTML = `<h3>${right === 9 ? 'Grid komplett!' : `${right} von 9 Feldern`}</h3><p>Seltenheits-Score: <b>${score}</b>. Tippe auf ein Feld, um alle möglichen Lösungen zu sehen.</p><div id="g-ans"></div>`;
   }
   function showAnswers(i) {
@@ -802,10 +1055,13 @@ function rankle() {
     </div>
     <div class="controls"><span class="spacer"></span><button class="btn ghost" id="r-new">Neue Runde</button></div>
     <div class="rk"><div id="r-left"></div><div class="rk-list" id="r-list"></div></div>`;
-  document.getElementById('r-new').onclick = start;
+  const restart = () => inDuel('rankle') ? newRound('rankle') : start();
+  document.getElementById('r-new').onclick = restart;
   function start() {
-    cats = shuffle(RANK_CATS).slice(0, 8);
-    picks = shuffle(eligible).slice(0, 8); idx = 0; assign = {};
+    const rnd = inDuel('rankle') ? duelRnd(0) : Math.random;
+    cats = shuffle(RANK_CATS, rnd).slice(0, 8);
+    picks = shuffle(eligible, rnd).slice(0, 8); idx = 0; assign = {};
+    duelReport('rankle', { label: 'Land 1/8 · Summe 0' });
     render();
   }
   const sum = () => Object.entries(assign).reduce((s, [k, c]) => s + RANKS[k].get(c.code), 0);
@@ -819,8 +1075,8 @@ function rankle() {
       if (a) return `<div class="rk-row done${flashK === cat.k ? ' flash' : ''}"><div class="cat">${esc(cat.label)}<small>${esc(cat.fmt(a[cat.k]))}</small></div><div class="who"><img src="${a.flagUrl}" alt="">${esc(a.name)}<span class="rank">#${RANKS[cat.k].get(a.code)}</span></div></div>`;
       return `<button class="rk-row" data-k="${cat.k}" ${c ? '' : 'disabled'}><div class="cat">${esc(cat.label)}<small>${esc(cat.sub)}</small></div><span class="rank" style="color:var(--muted)">?</span></button>`;
     }).join('') + `<div class="rk-total"><span>Summe der Plätze</span><b>${sum()}</b></div>`;
-    const again = document.getElementById('r-again'); if (again) again.onclick = start;
-    document.querySelectorAll('#r-list button.rk-row').forEach(b => b.onclick = () => { assign[b.dataset.k] = picks[idx]; idx++; if (idx === 8) finish(); render(b.dataset.k); });
+    const again = document.getElementById('r-again'); if (again) again.onclick = restart;
+    document.querySelectorAll('#r-list button.rk-row').forEach(b => b.onclick = () => { assign[b.dataset.k] = picks[idx]; idx++; if (idx === 8) finish(); else duelReport('rankle', { label: `Land ${idx + 1}/8 · Summe ${sum()}` }); render(b.dataset.k); });
   }
   function optimal() {
     // assignment by DP over subsets of categories
@@ -843,6 +1099,9 @@ function rankle() {
     opt = optimal();
     const s = sum(), b = store.get('rankle:best', null);
     if (b == null || s < b) store.set('rankle:best', s);
+    duelReport('rankle', { done: true, cmp: [-s], label: `Summe ${s}` });
+    recordResult('rankle', opt.total / s * 100, `Summe ${s} (optimal ${opt.total})`);
+    setTimeout(() => celebrate(opt.total / s * 100), 100);
     document.getElementById('r-best').textContent = store.get('rankle:best', '–');
   }
   function resultCard() {
@@ -867,7 +1126,8 @@ function usa() {
     return { id: f.id, en, label, keys, words: label.split(/\s+/).map(norm), f, area: path.area(f) };
   });
   const byId = Object.fromEntries(states.map(s => [s.id, s]));
-  const st = Object.assign({ mode: 'name' }, store.get('usa:settings', {}));
+  const st = Object.assign({ mode: 'name' }, store.get('usa:settings', {}), inDuel('usa') ? duel.settings : {});
+  const restart = () => inDuel('usa') ? newRound('usa') : start();
   let queue, idx, score, phase, current, found, timer, t0, ac;
 
   app.innerHTML = `
@@ -885,8 +1145,8 @@ function usa() {
     <div class="dock" id="u-dock"></div>`;
   const svgEl = document.getElementById('u-svg');
   const segs = app.querySelectorAll('.seg button');
-  segs.forEach(b => b.onclick = () => { st.mode = b.dataset.m; store.set('usa:settings', st); start(); });
-  document.getElementById('u-restart').onclick = start;
+  segs.forEach(b => b.onclick = () => { st.mode = b.dataset.m; store.set('usa:settings', st); restart(); });
+  document.getElementById('u-restart').onclick = restart;
   svgEl.addEventListener('click', e => { const p = e.target.closest('path.st:not(.dc)'); if (p && st.mode === 'find' && phase === 'ask') clickState(byId[p.dataset.id]); });
 
   const paint = (id, cls) => { const p = svgEl.querySelector(`path[data-id="${id}"]`); if (p) p.setAttribute('class', 'st' + (cls ? ' ' + cls : '')); };
@@ -899,7 +1159,7 @@ function usa() {
     segs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === st.mode)));
     resetPaint(); document.getElementById('u-labels').innerHTML = '';
     svgEl.parentElement.classList.toggle('clickable', st.mode === 'find');
-    queue = shuffle(states); idx = 0; score = 0; found = new Set();
+    queue = shuffle(states, inDuel('usa') ? duelRnd(0) : Math.random); idx = 0; score = 0; found = new Set();
     const best = store.get(bestKey(), null);
     document.getElementById('u-best').textContent = best == null ? '–' : (st.mode === 'all' ? best + '/50' : best);
     document.getElementById('u-intro').textContent = {
@@ -932,6 +1192,7 @@ function usa() {
     if (phase !== 'ask') return; phase = 'feedback';
     const ok = g === current;
     if (ok) score++;
+    duelReport('usa', { label: `Staat ${idx + 1}/50 · ${score} Pkt.` });
     paint(current.id, ok ? 'found' : 'missed');
     if (g && !ok) paint(g.id, 'guess');
     label(current); stats();
@@ -952,7 +1213,10 @@ function usa() {
     const b = store.get(bestKey(), null); if (b == null || score > b) store.set(bestKey(), score);
     document.getElementById('u-best').textContent = store.get(bestKey());
     document.getElementById('u-dock').innerHTML = `<div class="feedback"><div class="txt"><b>${score} von 50 richtig</b><span>Grün: gewusst · Rot: verpasst</span></div><button class="btn primary" id="u-again">Nochmal</button></div>`;
-    document.getElementById('u-again').onclick = start;
+    document.getElementById('u-again').onclick = restart;
+    duelReport('usa', { done: true, cmp: [score], label: `${score}/50 richtig` });
+    recordResult('usa', score * 2, `${score}/50 · ${st.mode === 'find' ? 'Finden' : 'Benennen'}`);
+    celebrate(score * 2);
   }
   function startAll() {
     phase = 'all'; t0 = Date.now(); const LIMIT = 600;
@@ -963,7 +1227,7 @@ function usa() {
     input.addEventListener('input', () => {
       const n = norm(input.value);
       const s = states.find(s => !found.has(s.id) && s.keys.includes(n));
-      if (s) { found.add(s.id); paint(s.id, 'found'); label(s); input.value = ''; stats(); listFound(); if (found.size === 50) endAll(); }
+      if (s) { found.add(s.id); paint(s.id, 'found'); label(s); input.value = ''; stats(); listFound(); duelReport('usa', { label: `${found.size}/50 gefunden` }); if (found.size === 50) endAll(); }
     });
     document.getElementById('u-give').onclick = endAll;
     const tick = () => {
@@ -971,7 +1235,7 @@ function usa() {
       document.getElementById('u-prog').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
       if (!left) endAll();
     };
-    tick(); timer = setInterval(tick, 500); stats(); listFound();
+    tick(); timer = setInterval(tick, 500); stats(); listFound(); duelReport('usa', { label: '0/50 gefunden' });
   }
   function listFound(missed) {
     const el = document.getElementById('u-found'); if (!el) return;
@@ -988,10 +1252,50 @@ function usa() {
     const dock = document.getElementById('u-dock');
     dock.innerHTML = `<div class="feedback${found.size === 50 ? '' : ' bad'}"><div class="txt"><b>${found.size} von 50 Staaten</b><span>in ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} Minuten${missed.length ? ' · Rot markiert: verpasst' : ''}</span></div><button class="btn primary" id="u-again">Nochmal</button></div><div class="found-list" id="u-found"></div>`;
     listFound(missed);
-    document.getElementById('u-again').onclick = start;
+    document.getElementById('u-again').onclick = restart;
+    duelReport('usa', { done: true, cmp: [found.size], label: `${found.size}/50 gefunden` });
+    recordResult('usa', found.size * 2, `${found.size}/50 · Alle 50`);
+    celebrate(found.size * 2);
   }
   start();
   return () => clearInterval(timer);
+}
+
+/* ---------- Statistik ---------- */
+function statsPage() {
+  const h = store.get('history', []);
+  const avg = a => a.length ? Math.round(a.reduce((s, x) => s + x.pct, 0) / a.length) : null;
+  const duels = h.filter(x => x.duel);
+  const wins = duels.filter(x => x.duel === 'win').length;
+  const fmtT = t => new Date(t).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ' ' + new Date(t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const bestOf = g => g === 'rankle' ? store.get('rankle:best', null) : null;
+  app.innerHTML = `
+    <div class="game-head"><div><h1>Deine Statistik</h1><p>Alle beendeten Spiele auf diesem Gerät. Die Werte sind in Prozent umgerechnet, damit du die Spiele vergleichen kannst.</p></div></div>
+    <div class="tiles">
+      <div class="tile"><span>Spiele beendet</span><b>${h.length}</b></div>
+      <div class="tile"><span>Ø Ergebnis</span><b>${h.length ? avg(h) + '%' : '–'}</b></div>
+      <div class="tile"><span>Perfekte Runden</span><b>${h.filter(x => x.pct === 100).length}</b></div>
+      <div class="tile"><span>Duelle gewonnen</span><b>${duels.length ? `${wins}/${duels.length}` : '–'}</b></div>
+    </div>
+    <div class="statgrid">${Object.entries(GAMES).map(([g, name]) => {
+      const list = h.filter(x => x.g === g);
+      const best = list.length ? Math.max(...list.map(x => x.pct)) : null;
+      const streak = ['flaggen', 'karte', 'umriss'].includes(g) ? store.get(g + ':best', 0) : null;
+      return `<section class="statcard">
+        <div class="row"><h3>${name}</h3><a href="#${g}">Spielen →</a></div>
+        <div class="kv"><div><span>Gespielt</span><b>${list.length}</b></div><div><span>Bestes</span><b>${best == null ? '–' : best + '%'}</b></div><div><span>${streak != null ? 'Beste Serie' : g === 'rankle' ? 'Beste Summe' : 'Schnitt'}</span><b>${streak != null ? streak : g === 'rankle' ? (bestOf(g) ?? '–') : (list.length ? avg(list) + '%' : '–')}</b></div></div>
+        ${list.length ? `<div class="spark" title="Letzte Runden">${list.slice(-16).map(x => `<i class="${x.duel ? 'duel' : ''}" style="height:${Math.max(4, x.pct)}%"></i>`).join('')}</div>
+        <ul class="hist">${list.slice(-4).reverse().map(x => `<li><span>${esc(x.label)}${x.duel ? `<span class="pill ${x.duel}">${x.duel === 'win' ? 'Sieg' : x.duel === 'loss' ? 'Niederlage' : 'Remis'}${x.opp ? ' vs ' + esc(x.opp) : ''}</span>` : ''}</span><time>${fmtT(x.t)}</time></li>`).join('')}</ul>`
+        : '<p class="empty">Noch keine Runde gespielt.</p>'}
+      </section>`;
+    }).join('')}</div>
+    <div class="controls" style="margin-top:20px"><span class="spacer"></span><button class="btn ghost" id="s-reset">Statistik zurücksetzen</button></div>`;
+  const rb = document.getElementById('s-reset');
+  rb.onclick = () => {
+    if (rb.dataset.armed) { store.set('history', []); statsPage(); toast('Statistik gelöscht.'); return; }
+    rb.dataset.armed = '1'; rb.textContent = 'Wirklich alles löschen?'; rb.classList.add('primary');
+    setTimeout(() => { if (rb.isConnected) { delete rb.dataset.armed; rb.textContent = 'Statistik zurücksetzen'; rb.classList.remove('primary'); } }, 4000);
+  };
 }
 
 /* ---------- router ---------- */
@@ -1001,7 +1305,11 @@ function route() {
   const r = location.hash.slice(1);
   document.querySelectorAll('#tabs a').forEach(a => { if (a.getAttribute('href') === '#' + r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   window.scrollTo(0, 0);
-  if (r === 'flaggen') quiz({
+  if (GAMES[r] && connected() && duel.game !== r) { newRound(r); return; }
+  if (inDuel(r)) duel.t0 = Date.now();
+  renderDuelBar();
+  if (r === 'statistik') statsPage();
+  else if (r === 'flaggen') quiz({
     key: 'flaggen', title: 'Flaggen', stageClass: 'stage-flag plain', pool: countries,
     intro: 'Zu welchem Land gehört diese Flagge?',
     show(stage, c) { stage.innerHTML = `<img src="${c.flagUrl}" alt="Flagge eines Landes">`; }
@@ -1020,6 +1328,7 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 route();
+try { const c = new URLSearchParams(location.search).get('duell'); if (c) modal('menu', c.toUpperCase().slice(0, 5)); } catch {}
 })();
 </script>
 
