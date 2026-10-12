@@ -1,0 +1,1847 @@
+<meta charset="utf-8">
+<title>Atlasjagd</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a chart-room desk. Sticky header with mode tabs, one wide stage per game, controls docked under the stage. */
+:root {
+  --paper: #edf1ef;
+  --panel: #f8faf9;
+  --ink: #15242b;
+  --muted: #5b6b70;
+  --line: #c9d3d1;
+  --sea: #d3e2e7;
+  --land: #c4cbb2;
+  --land-edge: #f4f6ef;
+  --accent: #f2b200;        /* compass marigold */
+  --accent-ink: #1b1600;
+  --teal: #0e6b69;
+  --ok: #2c8a52;
+  --bad: #c4432c;
+  --guess: #e07a5f;
+  --shadow: 0 1px 0 rgba(21,36,43,.06), 0 8px 24px -12px rgba(21,36,43,.25);
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e181d; --panel: #15232a; --ink: #e5eeec; --muted: #93a6a8; --line: #2a3d44;
+    --sea: #10232c; --land: #34474b; --land-edge: #0e181d; --accent: #f6c33b; --accent-ink: #1b1600;
+    --teal: #4fb7ab; --ok: #49b878; --bad: #ec6a51; --guess: #f08a6c;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e181d; --panel: #15232a; --ink: #e5eeec; --muted: #93a6a8; --line: #2a3d44;
+  --sea: #10232c; --land: #34474b; --land-edge: #0e181d; --accent: #f6c33b; --accent-ink: #1b1600;
+  --teal: #4fb7ab; --ok: #49b878; --bad: #ec6a51; --guess: #f08a6c;
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--f-body); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+
+/* header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); font: 800 21px/1 var(--f-display); flex-shrink: 0; }
+.brand svg { width: 26px; height: 26px; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.tabs a { white-space: nowrap; text-decoration: none; color: var(--muted); padding: 7px 11px; border-radius: 8px; font-weight: 500; font-size: 14px; }
+.tabs a:hover { color: var(--ink); background: var(--panel); }
+.tabs a[aria-current="page"] { color: var(--ink); background: var(--panel); box-shadow: inset 0 -2px 0 var(--accent); }
+
+main { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; }
+.loading { padding-block: 80px; text-align: center; color: var(--muted); font-family: var(--f-mono); font-size: 13px; }
+
+/* home */
+.hero { display: grid; gap: 10px; margin-bottom: 28px; max-width: 46rem; }
+.hero h1 { font-size: clamp(38px, 7vw, 68px); line-height: .95; font-weight: 800; }
+.hero h1 em { font-style: normal; color: var(--teal); }
+.hero p { margin: 0; color: var(--muted); font-size: 17px; max-width: 36rem; }
+.coords { font: 400 12px/1 var(--f-mono); color: var(--muted); letter-spacing: .04em; }
+.modes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.mode { display: grid; grid-template-rows: 170px auto; text-decoration: none; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+.mode:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.mode .thumb { background: var(--sea); display: grid; place-items: center; overflow: hidden; position: relative; }
+.mode .thumb svg { width: 100%; height: 100%; display: block; }
+.mode .body { padding: 14px 16px 16px; display: grid; gap: 4px; }
+.mode .body .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.mode h2 { font-size: 22px; font-weight: 700; }
+.mode p { margin: 0; color: var(--muted); font-size: 14px; }
+.tag { font: 600 11px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--teal); white-space: nowrap; }
+.flagstack { position: relative; width: 210px; height: 120px; }
+.flagstack img { position: absolute; width: 120px; border-radius: 4px; box-shadow: var(--shadow); }
+.flagstack img:nth-child(1) { left: 0; top: 18px; transform: rotate(-8deg); }
+.flagstack img:nth-child(2) { left: 45px; top: 4px; transform: rotate(2deg); }
+.flagstack img:nth-child(3) { left: 90px; top: 24px; transform: rotate(9deg); }
+.minigrid { display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; }
+.minigrid span { width: 40px; height: 40px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); background-size: cover; background-position: center; }
+.minirank { display: grid; gap: 6px; width: 220px; }
+.minirank div { display: flex; justify-content: space-between; font: 600 12px/1 var(--f-mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+.minirank b { color: var(--teal); }
+
+/* game shell */
+.game-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 16px; }
+.game-head h1 { font-size: clamp(28px, 4.5vw, 40px); font-weight: 800; line-height: 1; }
+.game-head p { margin: 6px 0 0; color: var(--muted); max-width: 40rem; }
+.stats { display: flex; gap: 18px; font-variant-numeric: tabular-nums; }
+.stat { display: grid; gap: 2px; text-align: right; }
+.stat span { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.stat b { font: 700 22px/1 var(--f-display); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: none; padding: 6px 11px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+select.sel { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; font-size: 13px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 8px 14px; font-weight: 600; font-size: 14px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.ghost { background: none; }
+.spacer { flex: 1; }
+
+.stage { position: relative; background: var(--sea); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage.plain { background: var(--panel); }
+.stage-flag { min-height: 300px; display: grid; place-items: center; padding: 28px; }
+.stage-flag img { width: min(420px, 100%); border-radius: 6px; box-shadow: var(--shadow); }
+.stage-map svg { display: block; width: 100%; height: min(58vh, 540px); touch-action: none; }
+.stage-outline { display: grid; place-items: center; padding: 16px; }
+.stage-outline svg { width: min(520px, 100%); height: min(48vh, 440px); display: block; }
+.land { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.land.target { fill: var(--accent); }
+.land.is-ok { fill: var(--ok); }
+.land.is-bad { fill: var(--bad); }
+.land.is-guess { fill: var(--guess); opacity: .85; }
+.ring { fill: none; stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.silhouette { fill: var(--ink); }
+.silhouette.ok { fill: var(--ok); }
+.silhouette.bad { fill: var(--bad); }
+.zoombar { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.zoombar button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; }
+.maphint { position: absolute; left: 12px; bottom: 10px; font: 400 11px/1 var(--f-mono); color: var(--muted); }
+
+/* answer dock */
+.dock { margin-top: 14px; display: grid; gap: 10px; }
+.ac { position: relative; }
+.ac input { width: 100%; padding: 14px 16px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); font-size: 17px; }
+.ac input:focus { border-color: var(--teal); outline: none; }
+.ac ul { position: absolute; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow); z-index: 30; max-height: 290px; overflow-y: auto; }
+.ac.up ul { top: auto; bottom: calc(100% + 4px); }
+.ac li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; cursor: pointer; }
+.ac li img { width: 26px; border-radius: 2px; }
+.ac li small { color: var(--muted); margin-left: auto; font-size: 12px; }
+.ac li[aria-selected="true"] { background: var(--sea); }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%,60% { transform: translateX(-6px) } 40%,80% { transform: translateX(6px) } }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.choices button { text-align: left; padding: 14px 16px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); font-weight: 600; font-size: 16px; }
+.choices button:hover:not(:disabled) { border-color: var(--teal); }
+.choices button.ok { background: var(--ok); color: #fff; border-color: transparent; }
+.choices button.bad { background: var(--bad); color: #fff; border-color: transparent; }
+.choices button:disabled { cursor: default; }
+.answer-row { display: flex; gap: 10px; }
+.answer-row .ac { flex: 1; min-width: 0; }
+
+.feedback { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 16px; border-radius: 11px; background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--ok); }
+.feedback.bad { border-left-color: var(--bad); }
+.feedback img { width: 54px; border-radius: 3px; }
+.feedback .txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.feedback .txt b { font: 700 19px/1.2 var(--f-display); }
+.feedback .txt span { color: var(--muted); font-size: 13px; }
+.facts { font: 400 12px/1.4 var(--f-mono); color: var(--muted); }
+
+.result { padding: 32px 24px; display: grid; gap: 16px; justify-items: center; text-align: center; }
+.result .big { font: 800 64px/1 var(--f-display); }
+.result .big small { font-size: 28px; color: var(--muted); }
+.mistakes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; }
+.mistakes span { display: inline-flex; gap: 6px; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 4px 9px 4px 4px; border-radius: 999px; font-size: 13px; }
+.mistakes img { width: 22px; border-radius: 2px; }
+
+/* grid game */
+.gg { display: grid; grid-template-columns: minmax(70px, .8fr) repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 560px; }
+.gg .hd { display: grid; place-items: center; text-align: center; font: 600 13px/1.25 var(--f-body); padding: 6px; min-height: 64px; }
+.gg .hd small { display: block; font: 400 10px/1.2 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.gg .corner { display: grid; place-items: center; text-align: center; }
+.gg .corner b { font: 800 34px/1 var(--f-display); }
+.gg .corner span { font: 600 10px/1.2 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.cell { aspect-ratio: 1; max-width: 100%; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); position: relative; overflow: hidden; display: grid; place-items: center; padding: 0; }
+.cell:hover:not(:disabled) { border-color: var(--teal); }
+.cell.filled { cursor: default; border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); background: color-mix(in srgb, var(--ok) 9%, var(--panel)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 18px 8px 8px; }
+.cell .cf { width: 56%; max-width: 72px; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.cell .lbl { font-size: 12px; font-weight: 600; color: var(--ink); text-align: center; line-height: 1.15; overflow-wrap: anywhere; }
+.cell .pct { position: absolute; top: 6px; right: 6px; font: 600 10px/1 var(--f-mono); color: var(--ok); }
+.cell .cnt { font: 600 11px/1 var(--f-mono); color: var(--muted); }
+.cell.sel { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent); }
+.gg-wrap { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.side { display: grid; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.card h3 { font-size: 17px; margin-bottom: 6px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.msg { min-height: 1.5em; font-size: 14px; color: var(--muted); }
+.msg.bad { color: var(--bad); } .msg.ok { color: var(--ok); }
+.anslist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-height: 260px; overflow-y: auto; }
+.anslist span { font-size: 12px; background: var(--sea); border-radius: 6px; padding: 3px 7px; }
+
+/* rankle */
+.rk { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.rk-country { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 12px; justify-items: center; text-align: center; }
+.rk-country img { width: 100%; max-width: 220px; border-radius: 5px; box-shadow: var(--shadow); }
+.rk-country b { font: 800 26px/1.1 var(--f-display); }
+.rk-country .facts { text-align: center; }
+.rk-list { display: grid; gap: 7px; }
+.rk-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 11px; background: var(--panel); border: 1.5px solid var(--line); text-align: left; min-height: 54px; }
+button.rk-row:hover { border-color: var(--teal); }
+.rk-row .cat { font-weight: 600; }
+.rk-row .cat small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+.rk-row .who { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.rk-row .who img { width: 26px; border-radius: 2px; }
+.rk-row .rank { font: 700 18px/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 3.2ch; text-align: right; }
+.rk-row.done { background: var(--sea); border-color: transparent; }
+.rk-row.flash { animation: flash .7s; }
+@keyframes flash { from { box-shadow: 0 0 0 4px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+.rk-total { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 4px; font-family: var(--f-display); }
+.rk-total b { font-size: 26px; }
+table.opt { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.opt td { padding: 5px 6px; border-top: 1px solid var(--line); }
+table.opt td:last-child { text-align: right; font-family: var(--f-mono); }
+
+/* usa */
+.us-stage svg { display: block; width: 100%; height: min(60vh, 600px); }
+.st { fill: var(--land); stroke: var(--land-edge); stroke-width: 1; }
+.st.dc { pointer-events: none; }
+.clickable .st:not(.dc):hover { fill: color-mix(in srgb, var(--land) 70%, var(--teal)); cursor: pointer; }
+.st.target { fill: var(--accent); }
+.st.found { fill: var(--ok); }
+.st.missed { fill: var(--bad); }
+.st.guess { fill: var(--guess); }
+.us-prompt { font: 700 26px/1.1 var(--f-display); }
+.found-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.found-list span { font-size: 12px; padding: 3px 7px; border-radius: 6px; background: var(--sea); }
+.found-list span.miss { background: color-mix(in srgb, var(--bad) 22%, transparent); }
+.us-label { font: 600 9px var(--f-body); fill: #fff; pointer-events: none; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; }
+
+/* duel */
+.lang-btn { flex-shrink: 0; padding: 0 10px; height: 34px; font: 700 12px/1 var(--f-mono); letter-spacing: .06em; }
+.ofc-lang { font: 700 11px/1 var(--f-body); letter-spacing: .04em; }
+.theme-btn { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; flex-shrink: 0; }
+.theme-btn svg { width: 17px; height: 17px; }
+.duel-btn { margin-left: auto; flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; font-size: 13px; }
+.duel-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.duel-btn.on .dot { background: var(--ok); }
+.duelbar { border-top: 1px solid var(--line); background: var(--panel); }
+.duelbar-in { max-width: 1120px; margin: 0 auto; padding: 8px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: 14px; }
+.duelbar .who { display: grid; gap: 1px; font-variant-numeric: tabular-nums; }
+.duelbar .who small { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.duelbar .vs { font: 800 13px/1 var(--f-display); color: var(--muted); }
+.duelbar .outcome { font: 800 17px/1 var(--f-display); }
+.duelbar .outcome.win { color: var(--ok); } .duelbar .outcome.loss { color: var(--bad); }
+.live { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); flex-shrink: 0; animation: pulse 1.8s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(6, 12, 15, .55); }
+.modal-card { width: min(560px, 100%); max-height: 100%; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; box-shadow: var(--shadow); }
+.modal-card h2 { font-size: 26px; font-weight: 800; }
+.modal-card h3 { font-size: 16px; }
+.modal-card p { margin: 0; color: var(--muted); }
+.field { display: grid; gap: 5px; font-size: 13px; font-weight: 600; }
+.field input { width: 100%; padding: 10px 12px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--paper); font-size: 16px; font-weight: 400; }
+.field input:focus { border-color: var(--teal); outline: none; }
+.duel-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.duel-cols > div { display: grid; gap: 8px; align-content: start; padding: 14px; border: 1px solid var(--line); border-radius: 12px; }
+.duel-code { font: 800 46px/1 var(--f-display); letter-spacing: .14em; text-align: center; padding: 16px; background: var(--sea); border-radius: 12px; }
+.linkrow { display: flex; gap: 8px; }
+.linkrow input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); font: 400 12px var(--f-mono); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.err { color: var(--bad); font-size: 14px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.result .big { animation: pop .7s cubic-bezier(.2, 1.5, .4, 1); }
+.result .verdict { font: 800 26px/1.1 var(--f-display); }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } }
+
+/* stats */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+.tile span, .kv span { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.tile b { font: 800 32px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.statgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 14px; }
+.statcard { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; align-content: start; }
+.statcard .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.statcard h3 { font-size: 20px; }
+.statcard a { color: var(--teal); font-size: 13px; font-weight: 600; text-decoration: none; }
+.kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.kv div { display: grid; gap: 4px; }
+.kv b { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.spark { display: flex; align-items: flex-end; gap: 3px; height: 44px; padding-bottom: 1px; border-bottom: 1px solid var(--line); }
+.spark i { flex: 1; max-width: 22px; background: var(--teal); border-radius: 2px 2px 0 0; min-height: 2px; }
+.spark i.duel { background: var(--accent); }
+.hist { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.hist li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.hist li:first-child { border-top: 0; }
+.hist time { color: var(--muted); font: 400 11px var(--f-mono); white-space: nowrap; }
+.pill { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .05em; padding: 3px 6px; border-radius: 5px; margin-left: 6px; }
+.pill.win { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.pill.loss { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+.pill.draw { background: var(--sea); color: var(--muted); }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+
+@media (max-width: 860px) {
+  .gg-wrap, .rk { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .choices { grid-template-columns: minmax(0, 1fr); }
+  .stats { gap: 12px; }
+  .stat b { font-size: 18px; }
+  .gg { gap: 5px; grid-template-columns: minmax(56px, .7fr) repeat(3, minmax(0, 1fr)); }
+  .gg .hd { font-size: 11px; padding: 2px; }
+  .cell .lbl { font-size: 10px; }
+  .brand span { display: none; }
+  .duel-cols { grid-template-columns: minmax(0, 1fr); }
+  .duel-btn { padding: 6px 9px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- Büro-Ansicht: a plain mail & calendar client ---------- */
+:root.office {
+  --paper: #f5f5f5; --panel: #ffffff; --ink: #242424; --muted: #616161; --line: #e0e0e0;
+  --sea: #f0f0f0; --land: #c7c7c7; --land-edge: #ffffff; --accent: #0f6cbd; --accent-ink: #ffffff;
+  --teal: #0f6cbd; --ok: #107c10; --bad: #c50f1f; --guess: #ca5010; --bar: #0f6cbd; --bar-ink: #ffffff; --search: rgba(255,255,255,.92); --search-ink: #242424;
+  --sel: #ebf3fc; --shadow: 0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06);
+  --f-display: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --f-body: var(--f-display); --f-mono: var(--f-display); --r: 4px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root.office:not([data-theme="light"]) {
+    --paper: #1b1b1b; --panel: #262626; --ink: #efefef; --muted: #ababab; --line: #3a3a3a;
+    --sea: #202020; --land: #4b4b4b; --land-edge: #262626; --accent: #479ef5; --accent-ink: #0b0b0b;
+    --teal: #479ef5; --ok: #54b054; --bad: #e36a74; --guess: #e8894a; --bar: #1f1f1f; --bar-ink: #efefef; --search: #333333; --search-ink: #efefef; --sel: #1d2f45;
+    color-scheme: dark;
+  }
+}
+:root.office[data-theme="dark"] {
+  --paper: #1b1b1b; --panel: #262626; --ink: #efefef; --muted: #ababab; --line: #3a3a3a;
+  --sea: #202020; --land: #4b4b4b; --land-edge: #262626; --accent: #479ef5; --accent-ink: #0b0b0b;
+  --teal: #479ef5; --ok: #54b054; --bad: #e36a74; --guess: #e8894a; --bar: #1f1f1f; --bar-ink: #efefef; --search: #333333; --search-ink: #efefef; --sel: #1d2f45;
+  color-scheme: dark;
+}
+html.office, html.office body { height: 100%; }
+.office body { font-size: 14px; display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; }
+.office .top { display: none; }
+.ofc-top { display: flex; align-items: center; gap: 14px; height: 48px; padding-inline: 12px 16px; background: var(--bar); color: var(--bar-ink); }
+.ofc-top svg { width: 18px; height: 18px; flex-shrink: 0; }
+.ofc-waffle { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 4px; }
+.ofc-appname { font-weight: 600; font-size: 16px; }
+.ofc-search { flex: 0 1 460px; margin-inline: auto; display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 4px; background: var(--search); color: var(--search-ink); }
+.ofc-search input { border: 0; background: none; outline: none; width: 100%; font-size: 14px; color: var(--search-ink); }
+.ofc-iconbtn { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 4px; background: none; color: inherit; position: relative; }
+.ofc-iconbtn:hover { background: rgba(255,255,255,.14); }
+.ofc-iconbtn.on::after { content: ""; position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #6ccb5f; }
+.ofc-avatar { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #c7e0f4; color: #0b3a5e; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.ofc-shell { display: grid; grid-template-columns: 48px 210px 340px minmax(0, 1fr); min-height: 0; }
+.ofc-apps { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px; background: var(--paper); border-right: 1px solid var(--line); }
+.ofc-apps a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 4px; color: var(--muted); }
+.ofc-apps a svg { width: 20px; height: 20px; }
+.ofc-apps a:hover { background: var(--sea); }
+.ofc-apps a.on { color: var(--accent); background: var(--sel); }
+.ofc-rail { display: flex; flex-direction: column; gap: 2px; padding: 12px 8px; background: var(--paper); border-right: 1px solid var(--line); overflow-y: auto; }
+.ofc-new { display: flex; align-items: center; justify-content: center; gap: 8px; height: 32px; margin-bottom: 12px; border: 0; border-radius: 4px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 14px; }
+.ofc-new svg { width: 16px; height: 16px; }
+.ofc-group { font-size: 12px; font-weight: 600; color: var(--muted); padding: 10px 10px 4px; }
+.ofc-rail a { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 4px; color: var(--ink); text-decoration: none; font-size: 14px; }
+.ofc-rail a svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+.ofc-rail a:hover { background: var(--sea); }
+.ofc-rail a.on { background: var(--sel); font-weight: 600; }
+.ofc-rail a.on svg { color: var(--accent); }
+.ofc-rail a b { margin-left: auto; color: var(--accent); font-size: 12px; }
+.ofc-rail .ofc-foot { margin-top: auto; padding-top: 12px; }
+.ofc-rail .ofc-foot button { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 4px 10px; }
+.ofc-main { min-width: 0; min-height: 0; overflow-y: auto; background: var(--paper); position: relative; }
+.office main { max-width: none; margin: 8px 12px 12px 4px; padding-inline: 24px; padding-block: 16px 40px; background: var(--panel); border-radius: 6px; box-shadow: var(--shadow); min-height: calc(100% - 20px); }
+.office .duelbar { background: var(--sel); border: 0; border-bottom: 1px solid var(--line); }
+.office .duelbar-in { max-width: none; padding-inline: 28px; }
+.office .live { animation: none; background: var(--accent); }
+.office .duelbar .who small, .office .stat span, .office .tag, .office .coords, .office .tile span, .office .kv span, .office .gg .hd small, .office .gg .corner span { font-family: var(--f-body); text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 400; }
+.office h1, .office h2, .office h3 { letter-spacing: 0; }
+.office .game-head { align-items: flex-start; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.office .game-head h1 { font-size: 20px; font-weight: 600; line-height: 1.3; }
+.office .game-head p { font-size: 14px; color: var(--ink); margin-top: 12px; }
+.mailmeta { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.mailmeta div { display: grid; line-height: 1.3; }
+.mailmeta b { font-weight: 600; font-size: 14px; }
+.mailmeta span { color: var(--muted); font-size: 12px; }
+.office .stats { gap: 16px; padding-top: 4px; }
+.office .stat b { font: 600 15px/1.2 var(--f-body); }
+.office .stat span { color: var(--muted); }
+.office .btn, .office select.sel, .office .seg { border-radius: 4px; font-size: 13px; font-weight: 600; }
+.office .btn { padding: 6px 12px; }
+.office .seg { padding: 2px; }
+.office .seg button { border-radius: 3px; padding: 4px 10px; }
+.office .seg button[aria-pressed="true"] { background: var(--sel); color: var(--accent); }
+.office .stage { border-radius: 4px; background: var(--panel); }
+.office .stage-map { background: var(--sea); }
+.office .stage-flag { min-height: 0; padding: 18px; justify-items: start; }
+.office .stage-flag img { width: min(240px, 100%); border-radius: 2px; box-shadow: none; border: 1px solid var(--line); }
+.office .stage-flag::before { content: "Anlage_01.svg · 24 KB"; font-size: 12px; color: var(--muted); }
+.office .stage-flag { gap: 8px; }
+.office .stage-outline svg { height: min(40vh, 340px); }
+.office .silhouette { fill: var(--muted); }
+.office .land.target, .office .st.target { fill: var(--accent); }
+.office .ring { stroke: var(--accent); }
+.office .ac input { border-radius: 4px; font-size: 14px; padding: 10px 12px; border-width: 1px; }
+.office .ac ul, .office .feedback, .office .card, .office .rk-country, .office .rk-row, .office .choices button, .office .tile, .office .statcard, .office .modal-card { border-radius: 4px; box-shadow: none; }
+.office .choices button { font-size: 14px; padding: 10px 12px; border-width: 1px; }
+.office .feedback { border-left-width: 3px; }
+.office .feedback .txt b, .office .rk-country b, .office .us-prompt { font: 600 16px/1.3 var(--f-body); }
+.office .result .big { font: 600 40px/1 var(--f-body); animation: none; }
+.office .result .big small { font-size: 18px; }
+.office .result .verdict { font: 600 18px/1.2 var(--f-body); }
+.office .gg { gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.office .gg > * { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.office .gg .hd { font-weight: 400; font-size: 13px; background: var(--paper); min-height: 54px; }
+.office .gg .corner { background: var(--paper); }
+.office .gg .corner b { font: 600 22px/1 var(--f-body); }
+.office .cell { border-radius: 0; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
+.office .cell:hover:not(:disabled) { background: var(--sel); }
+.office .cell.sel { box-shadow: inset 0 0 0 2px var(--accent); }
+.office .cell.filled { margin: 3px; border: 0; border-left: 3px solid var(--accent); border-radius: 3px; background: var(--sel); align-items: flex-start; justify-content: flex-start; padding: 6px 7px; gap: 4px; }
+.office .cell .cf { width: 34px; box-shadow: none; }
+.office .cell .lbl { text-align: left; font-weight: 600; }
+.office .cell .pct { color: var(--muted); font-family: var(--f-body); }
+.office .rk-row.done { background: var(--sel); }
+.office .rk-row .rank { font: 600 15px/1 var(--f-body); }
+.office .rk-country img { max-width: 160px; box-shadow: none; border: 1px solid var(--line); }
+.office .tile b, .office .kv b { font: 600 22px/1 var(--f-body); }
+.office .spark i.duel { background: var(--muted); }
+.office .modal { background: rgba(0,0,0,.35); }
+.office .duel-code { font: 600 34px/1 var(--f-body); }
+.office .toast { border-radius: 4px; }
+.inbox-head { display: flex; align-items: baseline; gap: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.inbox-head h1 { font: 600 20px/1.2 var(--f-body); }
+.inbox-tabs { display: flex; gap: 16px; font-size: 14px; color: var(--muted); }
+.inbox-tabs span.on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); padding-bottom: 4px; }
+.inbox { list-style: none; margin: 0; padding: 0; }
+.inbox a { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; position: relative; }
+.inbox a:hover { background: var(--sea); }
+.inbox a.unread::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.inbox .who { font-size: 14px; }
+.inbox a.unread .who, .inbox a.unread .subj { font-weight: 600; }
+.inbox a.unread .subj { color: var(--accent); }
+.inbox .txt { display: grid; min-width: 0; }
+.inbox .subj, .inbox .prev { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.inbox .prev { color: var(--muted); }
+.inbox time { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.inbox-day { font-size: 12px; font-weight: 600; color: var(--muted); padding: 14px 12px 6px; }
+.ofc-cover { position: absolute; inset: 0; z-index: 25; background: var(--panel); overflow-y: auto; padding: 18px 28px 48px; }
+.ofc-cover .back { border: 0; background: none; color: var(--accent); font-size: 13px; padding: 0; margin-bottom: 14px; }
+.ofc-cover h1 { font: 600 20px/1.3 var(--f-body); padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.ofc-cover .body { max-width: 62ch; font-size: 14px; line-height: 1.6; padding-top: 14px; }
+.ofc-cover .body p { margin: 0 0 12px; }
+@media (max-width: 1240px) { .office .gg-wrap, .office .rk { grid-template-columns: minmax(0, 1fr); } }
+.skin-switch { display: flex; justify-content: center; margin-top: 28px; }
+/* ribbon */
+.ofc-ribbon { background: var(--paper); border-bottom: 1px solid var(--line); padding: 0 12px 6px; }
+.rb-tabs { display: flex; gap: 2px; padding-top: 4px; }
+.rb-tabs button { border: 0; background: none; padding: 6px 10px; font-size: 14px; color: var(--muted); }
+.rb-tabs button.on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
+.rb-cmds { display: flex; align-items: center; gap: 2px; margin-top: 4px; padding: 4px 6px; background: var(--panel); border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; white-space: nowrap; }
+.rb-cmds button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 5px 8px; border-radius: 4px; font-size: 13px; color: var(--ink); flex-shrink: 0; }
+.rb-cmds button:hover { background: var(--sea); }
+.rb-cmds svg { width: 16px; height: 16px; color: var(--accent); }
+.rb-cmds .rb-new { background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 5px 12px; }
+.rb-cmds .rb-new svg { color: var(--accent-ink); }
+.rb-cmds .rb-new:hover { background: var(--accent); filter: brightness(1.08); }
+.rb-cmds button.on { background: var(--sel); }
+.rb-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; flex-shrink: 0; }
+.ofc-topicons { display: flex; gap: 2px; }
+/* message list */
+.ofc-list { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--line); margin: 8px 0 12px; border-radius: 6px 0 0 6px; }
+.ol-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px 6px; }
+.ol-head b { font-size: 16px; font-weight: 600; }
+.ol-head svg { width: 16px; height: 16px; color: var(--muted); }
+.ol-tabs { display: flex; gap: 16px; padding: 0 14px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+.ol-tabs span { padding: 6px 0 8px; }
+.ol-tabs span.on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
+.ol-items { overflow-y: auto; min-height: 0; flex: 1; }
+.ol-items .inbox a { padding: 10px 12px 10px 14px; }
+.ol-items .inbox a.sel { background: var(--sel); }
+.ol-items .inbox-day { padding: 12px 14px 4px; }
+.ofc-rail { padding-top: 8px; }
+.ofc-acct { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; padding: 12px 10px 4px; color: var(--ink); }
+.ofc-acct svg, .ofc-group svg { width: 12px; height: 12px; }
+.ofc-group { display: flex; align-items: center; gap: 6px; }
+.ofc-rail a.sub { padding-left: 30px; }
+/* reading pane */
+.mailmeta { justify-content: flex-start; }
+.mailmeta .acts { margin-left: auto; display: flex; gap: 2px; }
+.mailmeta .acts button { display: grid; place-items: center; width: 30px; height: 30px; border: 0; background: none; border-radius: 4px; color: var(--muted); }
+.mailmeta .acts button:hover { background: var(--sea); color: var(--accent); }
+.mailmeta .acts svg { width: 17px; height: 17px; }
+.office .game-head > div:first-child { flex: 1 1 420px; min-width: 0; }
+.ofc-empty { display: grid; place-items: center; align-content: center; gap: 10px; min-height: 60vh; text-align: center; color: var(--muted); }
+.ofc-empty svg { width: 120px; height: auto; }
+.ofc-empty b { color: var(--ink); font-size: 16px; font-weight: 600; }
+.ofc-backlink { display: none; border: 0; background: none; color: var(--accent); padding: 0 0 10px; font-size: 13px; }
+.office .ofc-cover { margin: 8px 12px 12px 4px; border-radius: 6px; }
+@media (max-width: 1180px) {
+  .ofc-shell { grid-template-columns: 48px 300px minmax(0, 1fr); }
+  .ofc-rail { display: none; }
+  .rb-cmds button span { display: none; }
+  .rb-cmds .rb-new span { display: inline; }
+}
+@media (max-width: 820px) {
+  .ofc-shell { grid-template-columns: minmax(0, 1fr); }
+  .ofc-apps, .ofc-search, .ofc-topicons .opt, .rb-tabs { display: none; }
+  .ofc-list { margin: 0; border-radius: 0; }
+  .office.reading .ofc-list { display: none; }
+  .office:not(.reading) .ofc-main { display: none; }
+  .office.reading .ofc-backlink { display: inline-block; }
+  .office main { margin: 0; border-radius: 0; padding-inline: 16px; }
+  .office .ofc-cover { margin: 0; padding-inline: 16px; }
+  .office .duelbar-in { padding-inline: 16px; }
+}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16 4 L19.5 16 L16 28 L12.5 16 Z" fill="var(--accent)"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg>
+      <span>Atlasjagd</span>
+    </a>
+    <nav class="tabs" id="tabs">
+      <a href="#flaggen">Flaggen</a>
+      <a href="#karte">Weltkarte</a>
+      <a href="#umriss">Umrisse</a>
+      <a href="#grid">Geo-Grid</a>
+      <a href="#rankle">Rankle</a>
+      <a href="#usa">USA</a>
+      <a href="#statistik">Statistik</a>
+    </nav>
+    <button class="btn duel-btn" id="duel-open" type="button"><i class="dot"></i>1:1 Duell</button>
+    <button class="btn theme-btn" id="theme-btn" type="button" data-themebtn></button>
+    <button class="btn lang-btn" id="lang-btn" type="button"></button>
+  </div>
+  <div class="duelbar" id="duelbar" hidden></div>
+</header>
+<div class="modal" id="duel-modal" hidden><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="duel-title" id="duel-card"></div></div>
+<div class="toast" id="toast" hidden></div>
+<main id="app"><div class="loading">Karten werden geladen …</div></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script>
+(async function () {
+'use strict';
+const app = document.getElementById('app');
+
+/* ---------- helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss').replace(/[^a-z0-9]/g, '');
+const umlautAlt = s => String(s).replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue');
+const shuffle = (a, rnd = Math.random) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a, rnd = Math.random) => a[Math.floor(rnd() * a.length)];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('atlasjagd:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('atlasjagd:' + k, JSON.stringify(v)); } catch {} }
+};
+
+/* ---------- Sprache: Deutsch / English ---------- */
+const EN = store.get('lang', 'de') === 'en';
+document.documentElement.lang = EN ? 'en' : 'de';
+const T = (de, en) => EN ? en : de;
+const LOC = EN ? 'en-US' : 'de-DE';
+const DAY = { Gestern: 'Yesterday', Mo: 'Mon', Di: 'Tue' };
+const dayT = d => EN ? (DAY[d] || d) : d;
+function toggleLang() { store.set('lang', EN ? 'de' : 'en'); location.reload(); }
+// static UI strings; dynamic ones are translated in code with T()
+const DICT = {
+  'Flaggen': 'Flags', 'Weltkarte': 'World map', 'Umrisse': 'Outlines', 'Statistik': 'Stats', 'USA-Staaten': 'US states',
+  '1:1 Duell': '1:1 Duel', 'Karten werden geladen …': 'Loading maps …', 'Wird geladen …': 'Loading …',
+  'Suchen': 'Search', 'Teilen': 'Share', 'Benachrichtigungen': 'Notifications', 'Einstellungen': 'Settings', 'Hilfe': 'Help',
+  'Start': 'Home', 'Ansicht': 'View', 'Neue E-Mail': 'New mail', 'Löschen': 'Delete', 'Archivieren': 'Archive', 'Melden': 'Report',
+  'Verschieben': 'Move', 'Antworten': 'Reply', 'Allen antworten': 'Reply all', 'Weiterleiten': 'Forward', 'Gelesen/Ungelesen': 'Read/Unread',
+  'Kennzeichnen': 'Flag', 'Weitere': 'More', 'Kalender': 'Calendar', 'Kontakte': 'People', 'Aufgaben': 'To Do', 'Ordner': 'Folders',
+  'Favoriten': 'Favorites', 'Posteingang': 'Inbox', 'Entwürfe': 'Drafts', 'Archiv': 'Archive', 'Mein Postfach': 'My mailbox',
+  'Kennzeichen': 'Labels', 'Standorte': 'Locations', 'Terminplanung': 'Scheduling', 'Berichte': 'Reports', 'US-Niederlassungen': 'US offices',
+  'Gesendete Elemente': 'Sent Items', 'Gelöschte Elemente': 'Deleted Items', 'Ansicht wechseln': 'Switch view', 'Nachrichten': 'Messages',
+  'Relevant': 'Focused', 'Sonstige': 'Other', 'Heute': 'Today', 'Gestern': 'Yesterday', 'Diese Woche': 'This week', 'Mo': 'Mon', 'Di': 'Tue',
+  '← Zurück': '← Back', '← Posteingang': '← Inbox', 'Weitere Aktionen': 'More actions', 'Element zum Lesen auswählen': 'Select an item to read',
+  'Nichts ausgewählt': 'Nothing is selected', 'Apps': 'Apps',
+  'Runde': 'Round', 'Punkte': 'Points', 'Serie': 'Streak', 'Rekord': 'Best', 'Kontinent': 'Continent', 'Alle Kontinente': 'All continents',
+  'Rundenzahl': 'Number of questions', '10 Fragen': '10 questions', '20 Fragen': '20 questions', 'Alle Länder': 'All countries',
+  'Antwortmodus': 'Answer mode', 'Eintippen': 'Type', '4 Antworten': '4 choices', 'Neu starten': 'Restart', 'Weiß ich nicht': "I don't know",
+  'Welches Land ist das?': 'Which country is this?', 'Ergebnis ansehen →': 'See result →', 'Weiter →': 'Next →', 'Ergebnis →': 'Result →',
+  'Perfekt!': 'Perfect!', 'Stark!': 'Great!', 'Gut gemacht!': 'Well done!', 'Weiter üben!': 'Keep practicing!',
+  'Diese hast du verpasst:': 'You missed these:', 'Alles richtig. Stark!': 'All correct. Great!', 'Nochmal spielen': 'Play again', 'Nochmal': 'Again',
+  'Ein Land ist farbig markiert. Welches ist es? Ziehen und scrollen zum Erkunden.': 'A country is highlighted. Which one is it? Drag and scroll to explore.',
+  'Hineinzoomen': 'Zoom in', 'Herauszoomen': 'Zoom out', 'Ganze Welt': 'Whole world', 'Mausrad / Pinch zum Zoomen': 'Scroll wheel / pinch to zoom',
+  'Zu welchem Land gehört diese Flagge?': 'Which country does this flag belong to?', 'Flagge eines Landes': "A country's flag",
+  'Welches Land hat diese Form? Weit entfernte Inseln und Überseegebiete sind weggelassen.': 'Which country has this shape? Remote islands and overseas territories are left out.',
+  'Umriss eines Landes': 'Outline of a country',
+  'Die Welt im Kopf,': 'The world in your head,', 'Land für Land.': 'country by country.',
+  'Sechs Spiele für dein Geografiewissen: Flaggen, Karten, Umrisse, Kombinationsrätsel und Ranglisten.': 'Six games for your geography knowledge: flags, maps, outlines, combination puzzles and rankings.',
+  '197 Flaggen': '197 flags', 'Eine Flagge erscheint. Zu welchem Land gehört sie?': 'A flag appears. Which country does it belong to?',
+  'Zoom & Suche': 'Zoom & search', 'Ein Land leuchtet auf der Karte. Erkennst du es?': 'A country lights up on the map. Can you name it?',
+  'Nur die Form': 'Just the shape', 'Kein Kontext, keine Nachbarn. Nur die Silhouette.': 'No context, no neighbors. Just the silhouette.',
+  'Tägliches Rätsel': 'Daily puzzle', '3×3 Felder, zwei Bedingungen pro Feld, zwölf Versuche.': '3×3 cells, two conditions per cell, twelve guesses.',
+  'Einwohner': 'Population', 'Fläche': 'Area', 'Lebenserwartung': 'Life expectancy', '8 Länder · 8 Kategorien': '8 countries · 8 categories',
+  'Ordne jedes Land der Kategorie zu, in der es am weitesten vorne liegt.': 'Assign each country to the category where it ranks highest.',
+  '50 Staaten': '50 states', 'Benennen, auf der Karte finden oder alle 50 aus dem Kopf.': 'Name them, find them on the map, or recall all 50 from memory.',
+  'Büro-Ansicht: sieht aus wie ein Mailprogramm': 'Office view: looks like an email client',
+  'Flaggenfarben werden analysiert …': 'Analyzing flag colors …',
+  'Finde für jedes Feld ein Land, das zur Zeile und zur Spalte passt. Jedes Land darf nur einmal vorkommen. Du hast zwölf Versuche.': 'Find a country for each cell that matches its row and its column. Each country can be used only once. You have twelve guesses.',
+  'Richtig': 'Correct', 'Seltenheit': 'Rarity', 'Rätselart': 'Puzzle type', 'Rätsel des Tages': 'Daily puzzle', 'Zufälliges Rätsel': 'Random puzzle',
+  'Aufgeben': 'Give up', 'Neues Rätsel ↻': 'New puzzle ↻', 'Feld auswählen': 'Pick a cell',
+  'Tippe auf ein leeres Feld und suche dann ein passendes Land.': 'Tap an empty cell, then search for a matching country.',
+  'Jede richtige Antwort bekommt einen geschätzten Anteil: Wie viele Spieler hätten dasselbe Land gewählt? Bekannte, große Länder zählen viel, seltene wenig. Leere Felder zählen 100. Je niedriger die Summe, desto besser.': 'Each correct answer gets an estimated share: how many players would have picked the same country? Well-known, large countries count a lot, rare ones little. Empty cells count 100. The lower the total, the better.',
+  'Versuche': 'Guesses', 'Land suchen …': 'Search country …',
+  'Land': 'Country', 'Summe': 'Sum', 'Bestwert': 'Best', 'Neue Runde': 'New round', 'Wähle rechts eine Kategorie.': 'Pick a category on the right.',
+  'Summe der Plätze': 'Sum of ranks', 'Ergebnis': 'Result',
+  'Zeit': 'Time', 'Spielart': 'Mode', 'Benennen': 'Name', 'Finden': 'Find', 'Alle 50': 'All 50', 'Welcher Staat ist das?': 'Which state is this?',
+  'Zeig es mir': 'Show me', 'Staat eintippen …': 'Type a state …', 'Übersprungen': 'Skipped', 'Grün: gewusst · Rot: verpasst': 'Green: known · Red: missed',
+  'Deine Statistik': 'Your stats', 'Alle beendeten Spiele auf diesem Gerät. Die Werte sind in Prozent umgerechnet, damit du die Spiele vergleichen kannst.': 'All finished games on this device. Scores are converted to percentages so you can compare the games.',
+  'Spiele beendet': 'Games finished', 'Ø Ergebnis': 'Avg. score', 'Perfekte Runden': 'Perfect rounds', 'Duelle gewonnen': 'Duels won', 'Spielen →': 'Play →',
+  'Gespielt': 'Played', 'Bestes': 'Best', 'Beste Serie': 'Best streak', 'Beste Summe': 'Best sum', 'Schnitt': 'Average', 'Letzte Runden': 'Recent rounds',
+  'Noch keine Runde gespielt.': 'No rounds played yet.', 'Statistik zurücksetzen': 'Reset stats', 'Wirklich alles löschen?': 'Really delete everything?',
+  'Statistik gelöscht.': 'Stats deleted.',
+  'Spiel live gegen jemanden auf einem anderen Gerät. Ihr bekommt genau dieselben Fragen. Wer mehr richtig hat, gewinnt. Bei Gleichstand entscheidet die Zeit.': 'Play live against someone on another device. You both get exactly the same questions. Whoever gets more right wins. On a tie, the faster player wins.',
+  'Dein Name': 'Your name', 'z. B. Caro': 'e.g. Sam', 'Duell erstellen': 'Create a duel', 'Du bekommst einen Code, den du weitergibst.': 'You get a code to share.',
+  'Code erstellen': 'Create code', 'Duell beitreten': 'Join a duel', 'Beitreten': 'Join', 'Schließen': 'Close', 'Abbrechen': 'Cancel',
+  'Dein Duell-Code': 'Your duel code', 'Schick den Code an deine Mitspielerin oder deinen Mitspieler. Sie oder er tippt auf': 'Send the code to your opponent. They tap',
+  'und gibt ihn unter „Beitreten“ ein. Oder du schickst direkt diesen Link:': 'and enter it under “Join”. Or send this link directly:',
+  'und gibt ihn unter „Beitreten“ ein.': 'and enter it under “Join”.', 'Kopieren': 'Copy', 'Kopiert': 'Copied', 'Warte auf Mitspieler …': 'Waiting for opponent …',
+  'Das hat nicht geklappt': "That didn't work", 'Nochmal versuchen': 'Try again', 'Code wird erstellt …': 'Creating code …', 'Verbinde mit dem Duell …': 'Connecting to the duel …',
+  'Der Code hat 5 Zeichen.': 'The code has 5 characters.', 'Duell beendet.': 'Duel ended.', 'Die Verbindung wurde getrennt.': 'The connection was lost.',
+  'Neue Runde für beide': 'New round for both', 'Duell beenden': 'End duel', 'Du': 'You', 'Status': 'Status', 'startet …': 'starting …', 'Unentschieden': 'Draw', 'Du gewinnst!': 'You win!',
+  'Zu diesem Code gibt es kein offenes Duell. Prüfe den Code oder lass dir einen neuen schicken.': 'There is no open duel for this code. Check the code or ask for a new one.',
+  'Der Duell-Server ist gerade nicht erreichbar. Prüfe deine Internetverbindung. In der Claude-Vorschau funktionieren Duelle nicht, nutze dafür die GitHub-Seite.': "The duel server can't be reached right now. Check your internet connection. Duels don't work in the Claude preview; use the GitHub page instead.",
+  'Die Verbindung kommt nicht zustande. Manche Netzwerke (z. B. Firmen- oder Schul-WLAN) blockieren direkte Verbindungen. Versucht es im Mobilfunknetz oder einem anderen WLAN.': "The connection can't be established. Some networks (e.g. office or school Wi-Fi) block direct connections. Try mobile data or another Wi-Fi."
+};
+const RULES = [
+  [/^Richtig! (.+)$/, 'Correct! $1'], [/^Feld (\d)\/(\d)$/, 'Cell $1/$2'], [/^(\d+) Lösungen$/, '$1 answers'],
+  [/^(\d+)% richtig · (.+)$/, (m, a, b) => `${a}% correct · ${{ 'Kartograf·in': 'Cartographer', 'Weltreisende·r': 'Globetrotter', 'Entdecker·in': 'Explorer' }[b] || b}`],
+  [/^Land (\d+) von 8$/, 'Country $1 of 8']
+];
+function tr(str) {
+  const t = str.trim(); if (!t) return str;
+  let out = DICT[t];
+  if (out == null) for (const [re, rep] of RULES) if (re.test(t)) { out = t.replace(re, rep); break; }
+  return out == null ? str : str.replace(t, out);
+}
+function translateTree(root) {
+  if (!EN || !root) return;
+  if (root.nodeType === 3) { const v = tr(root.nodeValue); if (v !== root.nodeValue) root.nodeValue = v; return; }
+  if (root.nodeType !== 1) return;
+  if (root.tagName === 'SCRIPT' || root.tagName === 'STYLE') return;
+  for (const a of ['placeholder', 'title', 'aria-label', 'alt']) if (root.hasAttribute(a)) { const v = tr(root.getAttribute(a)); if (v !== root.getAttribute(a)) root.setAttribute(a, v); }
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  let n; while ((n = w.nextNode())) {
+    if (n.nodeType === 3) { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
+    else for (const a of ['placeholder', 'title', 'aria-label', 'alt']) if (n.hasAttribute(a)) { const v = tr(n.getAttribute(a)); if (v !== n.getAttribute(a)) n.setAttribute(a, v); }
+  }
+}
+if (EN) {
+  translateTree(document.body);
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === 'characterData') translateTree(m.target); else m.addedNodes.forEach(translateTree); } })
+    .observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+/* ---------- Büro-Ansicht ---------- */
+const FORCE_SKIN = 'office';
+let OFFICE = false;
+const THEME_KEY = 'theme';
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+function currentDark() { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+function toggleTheme() { const t = currentDark() ? 'light' : 'dark'; store.set(THEME_KEY, t); applyTheme(t); syncThemeBtns(); }
+function syncThemeBtns() { document.querySelectorAll('[data-themebtn]').forEach(b => { const d = currentDark(); b.innerHTML = d ? ICON.sun : ICON.moon; b.title = d ? T('Helles Design', 'Light theme') : T('Dunkles Design', 'Dark theme'); b.setAttribute('aria-label', b.title); }); }
+try { const q = new URLSearchParams(location.search); if (q.has('buero')) store.set('skin', 'office'); if (q.has('normal')) store.set('skin', ''); } catch {}
+OFFICE = FORCE_SKIN === 'office' || store.get('skin', '') === 'office';
+applyTheme(store.get(THEME_KEY, '') || (FORCE_SKIN === 'office' ? 'dark' : ''));
+const ICON = {
+  waffle: '<svg viewBox="0 0 20 20" fill="currentColor"><circle cx="4" cy="4" r="1.6"/><circle cx="10" cy="4" r="1.6"/><circle cx="16" cy="4" r="1.6"/><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/><circle cx="4" cy="16" r="1.6"/><circle cx="10" cy="16" r="1.6"/><circle cx="16" cy="16" r="1.6"/></svg>',
+  search: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4.5 4.5"/></svg>',
+  share: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="3"/><path d="M2 17c0-3 2.2-5 5-5s5 2 5 5"/><path d="M14 6v6M11 9h6"/></svg>',
+  mail: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="4.5" width="15" height="11" rx="1.5"/><path d="M3 5.5l7 5 7-5"/></svg>',
+  cal: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3.5" width="15" height="14" rx="1.5"/><path d="M2.5 7.5h15M6.5 2v3M13.5 2v3"/></svg>',
+  inbox: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 11.5l2-7h11l2 7v4a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z"/><path d="M2.5 11.5h4l1 2h5l1-2h4"/></svg>',
+  tag: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 17V3M4 4h10l-2 3.5 2 3.5H4"/></svg>',
+  pin: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 17s-5-5-5-9a5 5 0 0 1 10 0c0 4-5 9-5 9z"/><circle cx="10" cy="8" r="1.8"/></svg>',
+  draft: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 3.5l3 3L7 16H4v-3z"/></svg>',
+  chart: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 16.5h14M6 13.5v-4M10 13.5v-8M14 13.5v-6"/></svg>',
+  office: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2.5" width="12" height="15" rx="1"/><path d="M7 6h2M11 6h2M7 9h2M11 9h2M7 12h2M11 12h2"/></svg>',
+  archive: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3.5" width="15" height="4" rx="1"/><path d="M4 7.5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8M8 11h4"/></svg>',
+  trash: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 5.5h13M8 5.5V3.5h4v2M5 5.5l1 11h8l1-11"/></svg>',
+  shield: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2.5l6 2.5v4.5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/></svg>',
+  folder: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 5.5a1 1 0 0 1 1-1h4l2 2h7a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z"/></svg>',
+  reply: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 5L3 10l5 5M3.5 10H12a5 5 0 0 1 5 5v1"/></svg>',
+  replyall: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 5l-5 5 5 5M11 5l-5 5 5 5M6.5 10H13a4 4 0 0 1 4 4v2"/></svg>',
+  forward: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5l5 5-5 5M16.5 10H8a5 5 0 0 0-5 5v1"/></svg>',
+  more: '<svg viewBox="0 0 20 20" fill="currentColor"><circle cx="4.5" cy="10" r="1.4"/><circle cx="10" cy="10" r="1.4"/><circle cx="15.5" cy="10" r="1.4"/></svg>',
+  gear: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg>',
+  bell: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 14V9a5 5 0 0 1 10 0v5l1.5 1.5h-13zM8.5 17.5h3"/></svg>',
+  help: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7.5"/><path d="M7.8 7.8a2.3 2.3 0 1 1 3.2 2.1c-.7.3-1 .8-1 1.5M10 14v.2"/></svg>',
+  people: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="3"/><path d="M2 17c0-3 2.2-5 5-5s5 2 5 5"/><circle cx="14.5" cy="8" r="2.2"/><path d="M13.5 12.2c2.4-.3 4.5 1.4 4.5 4.3"/></svg>',
+  read: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 8.5L10 3.5l7.5 5v8h-15z"/><path d="M3 9l7 5 7-5"/></svg>',
+  filter: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h14M6 10h8M8.5 15h3"/></svg>',
+  chev: '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5l3 3 3-3"/></svg>',
+  sent: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 10L17 3l-4 14-3.5-5.5z M9.5 11.5L17 3"/></svg>',
+  people2: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.7-5 6-5s6 2 6 5"/></svg>',
+  todo: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7.5"/><path d="M6.5 10l2.5 2.5 4.5-5"/></svg>',
+  moon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16.5 12.5A7 7 0 0 1 7.5 3.5a7 7 0 1 0 9 9z"/></svg>',
+  sun: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="3.5"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M4 4l1.4 1.4M14.6 14.6L16 16M4 16l1.4-1.4M14.6 5.4L16 4"/></svg>',
+  plus: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 4v12M4 10h12"/></svg>'
+};
+const kw = (() => { const d = new Date(); const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y) / 864e5 + 1) / 7); })();
+const OFC_FOLDERS = [
+  ['', 'Posteingang', 'inbox', 3], ['flaggen', 'Kennzeichen', 'folder', 1, 1], ['karte', 'Standorte', 'folder', 1, 1], ['grid', 'Terminplanung', 'folder', 0, 1],
+  ['rankle', 'Berichte', 'folder', 0, 1], ['usa', 'US-Niederlassungen', 'folder', 0, 1], ['umriss', 'Entwürfe', 'draft', 1], ['-sent', 'Gesendete Elemente', 'sent'],
+  ['-del', 'Gelöschte Elemente', 'trash'], ['statistik', 'Archiv', 'archive']
+];
+const OFC_MAIL_EN = {
+  flaggen: ['Anna Lehmann', 'AL', 'Country label check', 'Hi, attached are the labels from the supplier audit. Could you match them to the countries?', '09:14'],
+  karte: ['Jonas Weber', 'JW', 'Site overview – please review', 'One site on the map is marked but not yet assigned to a country.', '08:52'],
+  umriss: ['Miriam Koch', 'MK', 'Draft: territory layout', 'Here is the new layout of the sales territories. Can you tell which one this is?', 'Gestern'],
+  grid: ['Calendar', 'CA', `Scheduling week ${kw}`, 'Please fill each slot with a matching appointment. Every row and column has requirements.', 'Gestern'],
+  rankle: ['Controlling', 'CO', 'Q4 ranking analysis', 'Please assign the eight markets to the metrics where they are strongest.', 'Mo'],
+  usa: ['Daniel Brooks', 'DB', 'US offices overview', 'Quick check of the US sites before the quarterly meeting.', 'Mo'],
+  statistik: ['System', 'SY', 'Archive – summary', '', '']
+};
+const OFC_FILLER_EN = [
+  ['IT Service', 'IT', 'Maintenance window on Saturday', 'On Saturday between 6:00 and 10:00 some services will be briefly unavailable.', '07:30',
+    '<p>Hi all,</p><p>on Saturday between 6:00 and 10:00 we are doing scheduled maintenance. During this time the ticket system and the file share will be briefly unavailable.</p><p>Please save open documents locally beforehand. If you have questions, reach us through the service portal as usual.</p><p>Best regards<br>IT Service</p>'],
+  ['Team Assistant', 'TA', 'Weekly meeting minutes', 'Attached are the minutes from Tuesday. Please comment on open items by Friday.', 'Di',
+    '<p>Hi all,</p><p>attached are the minutes of our weekly meeting on Tuesday.</p><p><b>1. Project status:</b> Planning is on schedule, alignment with purchasing follows next week.<br><b>2. Budget:</b> Approval for Q1 has been requested.<br><b>3. Other:</b> The team event will be scheduled via a poll.</p><p>Please comment on open items directly in the document by Friday.</p><p>Thanks and best regards</p>'],
+  ['Travel Expenses', 'TE', 'Your expense report was approved', 'Report no. 2026-0412 was reviewed and approved for payment.', 'Di',
+    '<p>Hello,</p><p>your expense report no. 2026-0412 has been reviewed and approved for payment. The amount will be reimbursed with your next payroll.</p><p>This is an automatically generated message.</p>']
+];
+const OFC_MAIL = {
+  flaggen: ['Anna Lehmann', 'AL', 'Abgleich Länderkennzeichen', 'Hallo, anbei die Kennzeichen aus dem Lieferanten-Audit. Kannst du sie bitte den Ländern zuordnen?', '09:14'],
+  karte: ['Jonas Weber', 'JW', 'Standortübersicht – bitte prüfen', 'Auf der Karte ist ein Standort markiert, der noch keinem Land zugeordnet ist.', '08:52'],
+  umriss: ['Miriam Koch', 'MK', 'Entwurf: Gebietszuschnitt', 'Hier der neue Zuschnitt der Vertriebsgebiete. Erkennst du, welches Gebiet das ist?', 'Gestern'],
+  grid: ['Kalender', 'KA', `Terminplanung KW ${kw}`, 'Bitte trage für jeden Slot einen passenden Termin ein. Jede Zeile und Spalte hat Vorgaben.', 'Gestern'],
+  rankle: ['Controlling', 'CO', 'Ranking-Auswertung Q4', 'Bitte ordne die acht Märkte den Kennzahlen zu, in denen sie am stärksten sind.', 'Mo'],
+  usa: ['Daniel Brooks', 'DB', 'Übersicht US-Niederlassungen', 'Kurzer Abgleich der US-Standorte vor dem Quartalsmeeting.', 'Mo'],
+  statistik: ['System', 'SY', 'Archiv – Zusammenfassung', '', '']
+};
+let OFC_FILLER = [
+  ['IT-Service', 'IT', 'Wartungsfenster am Samstag', 'Am Samstag zwischen 06:00 und 10:00 Uhr sind einzelne Dienste kurzzeitig nicht erreichbar.', '07:30',
+    '<p>Hallo zusammen,</p><p>am Samstag zwischen 06:00 und 10:00 Uhr führen wir planmäßige Wartungsarbeiten durch. In diesem Zeitraum sind das Ticketsystem und die Dateiablage kurzzeitig nicht erreichbar.</p><p>Bitte speichert offene Dokumente vorher lokal. Bei Fragen erreicht ihr uns wie gewohnt über das Service-Portal.</p><p>Viele Grüße<br>IT-Service</p>'],
+  ['Teamassistenz', 'TA', 'Protokoll Jour fixe', 'Anbei das Protokoll von Dienstag. Offene Punkte bitte bis Freitag kommentieren.', 'Di',
+    '<p>Hallo zusammen,</p><p>anbei das Protokoll unseres Jour fixe von Dienstag.</p><p><b>1. Stand Projekte:</b> Planung liegt im Zeitplan, Abstimmung mit dem Einkauf folgt nächste Woche.<br><b>2. Budget:</b> Die Freigabe für Q1 ist beantragt.<br><b>3. Sonstiges:</b> Teamevent wird per Umfrage terminiert.</p><p>Offene Punkte bitte bis Freitag direkt im Dokument kommentieren.</p><p>Danke und viele Grüße</p>'],
+  ['Reisekosten', 'RK', 'Ihre Abrechnung wurde freigegeben', 'Die Abrechnung Nr. 2026-0412 wurde geprüft und zur Auszahlung freigegeben.', 'Di',
+    '<p>Guten Tag,</p><p>Ihre Reisekostenabrechnung Nr. 2026-0412 wurde geprüft und zur Auszahlung freigegeben. Der Betrag wird mit der nächsten Gehaltsabrechnung erstattet.</p><p>Dies ist eine automatisch erstellte Nachricht.</p>']
+];
+function setupOffice() {
+  if (EN) { Object.assign(OFC_MAIL, OFC_MAIL_EN); OFC_FILLER = OFC_FILLER_EN; }
+  const root = document.documentElement; root.classList.add('office');
+  document.title = T('Posteingang – Mail', 'Inbox – Mail');
+  const ico = document.createElement('link'); ico.rel = 'icon';
+  ico.href = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect x="1" y="3" width="18" height="14" rx="2" fill="#0f6cbd"/><path d="M2 5l8 6 8-6" fill="none" stroke="#fff" stroke-width="1.6"/></svg>');
+  document.head.appendChild(ico);
+  const nm = store.get('name', '') || 'Ich';
+  const ini = nm.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const top = document.createElement('div'); top.className = 'ofc-top';
+  top.innerHTML = `<span class="ofc-waffle">${ICON.waffle}</span><span class="ofc-appname">Mail</span>
+    <label class="ofc-search">${ICON.search}<input id="ofc-q" type="search" placeholder="Suchen" aria-label="Suchen"></label>
+    <div class="ofc-topicons"><button class="ofc-iconbtn" id="ofc-share" title="Teilen" aria-label="Teilen">${ICON.people}</button><button class="ofc-iconbtn opt" title="Benachrichtigungen" aria-label="Benachrichtigungen">${ICON.bell}</button><button class="ofc-iconbtn ofc-lang" id="ofc-lang" title="${T('Sprache: English', 'Language: Deutsch')}">${EN ? 'DE' : 'EN'}</button><button class="ofc-iconbtn" data-themebtn id="ofc-theme"></button><button class="ofc-iconbtn opt" title="Einstellungen" aria-label="Einstellungen" id="ofc-gear">${ICON.gear}</button><button class="ofc-iconbtn opt" title="Hilfe" aria-label="Hilfe">${ICON.help}</button></div>
+    <span class="ofc-avatar">${esc(ini)}</span>`;
+  const ribbon = document.createElement('div'); ribbon.className = 'ofc-ribbon';
+  const cmd = (id, icon, label, cls = '') => `<button ${id ? `id="${id}"` : ''} class="${cls}" title="${label}">${ICON[icon]}<span>${label}</span></button>`;
+  ribbon.innerHTML = `<div class="rb-tabs"><button class="on">Start</button><button>Ansicht</button><button>Hilfe</button></div>
+    <div class="rb-cmds">${cmd('ofc-new', 'mail', 'Neue E-Mail', 'rb-new')}<span class="rb-sep"></span>${cmd('rb-del', 'trash', 'Löschen')}${cmd('rb-arch', 'archive', 'Archivieren')}${cmd('', 'shield', 'Melden')}${cmd('', 'folder', 'Verschieben')}<span class="rb-sep"></span>${cmd('rb-reply', 'reply', 'Antworten')}${cmd('rb-replyall', 'replyall', 'Allen antworten')}${cmd('rb-fwd', 'forward', 'Weiterleiten')}<span class="rb-sep"></span>${cmd('', 'read', 'Gelesen/Ungelesen')}${cmd('', 'tag', 'Kennzeichnen')}${cmd('', 'more', 'Weitere')}</div>`;
+  const shell = document.createElement('div'); shell.className = 'ofc-shell';
+  shell.innerHTML = `<nav class="ofc-apps" aria-label="Apps"><a href="#" data-app="mail" title="Mail">${ICON.mail}</a><a href="#grid" data-app="cal" title="Kalender">${ICON.cal}</a><a href="#statistik" title="Kontakte">${ICON.people2}</a><a href="#statistik" title="Aufgaben">${ICON.todo}</a></nav>
+    <nav class="ofc-rail" aria-label="Ordner"><div class="ofc-group">${ICON.chev}Favoriten</div>
+    <a href="#" data-f="">${ICON.inbox}<span>Posteingang</span><b>3</b></a><a href="#umriss" data-f="umriss">${ICON.draft}<span>Entwürfe</span><b>1</b></a><a href="#statistik" data-f="statistik">${ICON.archive}<span>Archiv</span></a>
+    <div class="ofc-acct">${ICON.chev}${esc(nm === 'Ich' ? 'Mein Postfach' : nm)}</div>
+    ${OFC_FOLDERS.map(([h, n, i, c, sub]) => `<a href="#${h.startsWith('-') ? '' : h}" data-f="${h}" class="${sub ? 'sub' : ''}">${ICON[i]}<span>${n}</span>${c ? `<b>${c}</b>` : ''}</a>`).join('')}
+    <div class="ofc-foot"><button id="ofc-skin">Ansicht wechseln</button></div></nav>
+    <section class="ofc-list" aria-label="Nachrichten"><div class="ol-head"><b>Posteingang</b><span class="spacer"></span>${ICON.filter}</div>
+      <div class="ol-tabs"><span class="on">Relevant</span><span>Sonstige</span></div><div class="ol-items" id="ofc-items"></div></section>
+    <div class="ofc-main" id="ofc-main"></div>`;
+  document.body.insertBefore(shell, document.body.firstChild);
+  document.body.insertBefore(ribbon, shell);
+  document.body.insertBefore(top, ribbon);
+  const main = shell.querySelector('#ofc-main');
+  main.appendChild(document.getElementById('duelbar'));
+  main.appendChild(app);
+  main.insertAdjacentHTML('beforeend', '<div class="ofc-cover" id="ofc-cover" hidden></div>');
+  renderInboxList();
+  const share = () => document.getElementById('duel-open').click();
+  const focusAnswer = () => { const i = app.querySelector('.ac input, #u-all'); if (i) i.focus(); else app.querySelector('.choices button, .cell:not(.filled), .rk-row:not(.done)')?.focus(); };
+  document.getElementById('ofc-share').onclick = share;
+  document.getElementById('rb-fwd').onclick = share;
+  document.getElementById('rb-reply').onclick = focusAnswer;
+  document.getElementById('rb-replyall').onclick = focusAnswer;
+  document.getElementById('rb-del').onclick = () => { location.hash = ''; };
+  document.getElementById('rb-arch').onclick = () => { location.hash = 'statistik'; };
+  document.getElementById('ofc-gear').onclick = () => document.getElementById('ofc-skin').click();
+  document.getElementById('ofc-new').onclick = () => { if (connected() && duel.game) newRound(duel.game); else { const g = location.hash.slice(1); if (GAMES[g]) goTo(g); else location.hash = 'flaggen'; } };
+  document.getElementById('ofc-skin').onclick = () => { store.set('skin', ''); location.href = (FORCE_SKIN ? 'index.html' : location.pathname) + location.hash; };
+  document.getElementById('ofc-theme').onclick = toggleTheme; syncThemeBtns();
+  document.getElementById('ofc-lang').onclick = toggleLang;
+  document.getElementById('ofc-q').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const q = norm(e.target.value); const f = OFC_FOLDERS.find(([h, n]) => !h.startsWith('-') && norm(n).includes(q));
+    if (q && f) { location.hash = f[0]; e.target.value = ''; }
+  });
+  // Esc twice quickly: cover the screen with an ordinary email
+  let lastEsc = 0;
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const now = Date.now();
+    if (now - lastEsc < 600) { toggleCover(); lastEsc = 0; } else lastEsc = now;
+  });
+}
+function renderInboxList() {
+  const row = (href, m, unread, filler) => `<li><a href="${href}" class="${unread ? 'unread' : ''}" ${filler != null ? `data-filler="${filler}"` : `data-g="${href.slice(1)}"`}><span class="ofc-avatar">${m[1]}</span><span class="txt"><span class="who">${esc(m[0])}</span><span class="subj">${esc(m[2])}</span><span class="prev">${esc(m[3])}</span></span><time>${dayT(m[4])}</time></a></li>`;
+  const el = document.getElementById('ofc-items');
+  el.innerHTML = `<div class="inbox-day">Heute</div><ul class="inbox">${row('#flaggen', OFC_MAIL.flaggen, true)}${row('#karte', OFC_MAIL.karte, true)}${row('#', OFC_FILLER[0], false, 0)}</ul>
+    <div class="inbox-day">Gestern</div><ul class="inbox">${row('#umriss', OFC_MAIL.umriss, true)}${row('#grid', OFC_MAIL.grid, false)}</ul>
+    <div class="inbox-day">Diese Woche</div><ul class="inbox">${row('#rankle', OFC_MAIL.rankle, false)}${row('#', OFC_FILLER[1], false, 1)}${row('#usa', OFC_MAIL.usa, false)}${row('#', OFC_FILLER[2], false, 2)}</ul>`;
+  el.querySelectorAll('[data-filler]').forEach(a => a.onclick = e => {
+    e.preventDefault(); el.querySelectorAll('a.sel').forEach(x => x.classList.remove('sel')); a.classList.add('sel');
+    document.documentElement.classList.add('reading'); toggleCover(+a.dataset.filler, true);
+  });
+}
+function toggleCover(i = 1, force) {
+  const c = document.getElementById('ofc-cover'); if (!c) return;
+  const show = force ?? c.hidden;
+  if (show) {
+    const m = OFC_FILLER[i];
+    c.innerHTML = `<button class="back" id="ofc-back">← Zurück</button><h1>${esc(m[2])}</h1>
+      <div class="mailmeta"><span class="ofc-avatar">${m[1]}</span><div><b>${esc(m[0])}</b><span>${T('An: Ich', 'To: me')} · ${dayT(m[4])}</span></div></div><div class="body">${m[6]}</div>`;
+    document.getElementById('ofc-back').onclick = () => { toggleCover(0, false); if (!GAMES[location.hash.slice(1)]) document.documentElement.classList.remove('reading'); };
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+  }
+  c.hidden = !show;
+}
+function decorateOffice() {
+  if (!OFFICE) return;
+  const r = location.hash.slice(1);
+  document.querySelectorAll('.ofc-rail a').forEach(a => a.classList.toggle('on', a.dataset.f === r));
+  document.querySelectorAll('.ofc-apps a').forEach(a => a.classList.toggle('on', a.dataset.app === (r === 'grid' ? 'cal' : r === '' || GAMES[r] ? 'mail' : '-')));
+  document.querySelectorAll('#ofc-items a[data-g]').forEach(a => { const on = a.dataset.g === r; a.classList.toggle('sel', on); if (on) a.classList.remove('unread'); });
+  document.querySelectorAll('#ofc-items a[data-filler]').forEach(a => a.classList.remove('sel'));
+  document.documentElement.classList.toggle('reading', !!(GAMES[r] || r === 'statistik'));
+  const head = app.querySelector('.game-head'); const m = OFC_MAIL[r];
+  if (!head || !m || head.dataset.dec) return;
+  head.dataset.dec = '1';
+  const h1 = head.querySelector('h1'); h1.textContent = m[2];
+  h1.insertAdjacentHTML('beforebegin', '<button class="ofc-backlink" id="ofc-backlink">← Posteingang</button>');
+  document.getElementById('ofc-backlink').onclick = () => { location.hash = ''; };
+  if (m[4]) h1.insertAdjacentHTML('afterend', `<div class="mailmeta"><span class="ofc-avatar">${m[1]}</span><div><b>${esc(m[0])}</b><span>${T('An: Ich', 'To: me')} · ${dayT(m[4])}</span></div>
+    <div class="acts"><button title="Antworten" data-a="reply">${ICON.reply}</button><button title="Allen antworten" data-a="reply">${ICON.replyall}</button><button title="Weiterleiten" data-a="fwd">${ICON.forward}</button><button title="Weitere Aktionen">${ICON.more}</button></div></div>`);
+  head.querySelectorAll('.acts [data-a]').forEach(b => b.onclick = () => document.getElementById(b.dataset.a === 'fwd' ? 'rb-fwd' : 'rb-reply').click());
+}
+function officeHome() {
+  app.innerHTML = `<div class="ofc-empty"><svg viewBox="0 0 120 90" fill="none" aria-hidden="true"><rect x="10" y="18" width="100" height="64" rx="6" fill="var(--sel)" stroke="var(--accent)" stroke-width="2"/><path d="M12 22l48 34 48-34" stroke="var(--accent)" stroke-width="2"/><circle cx="96" cy="16" r="12" fill="var(--accent)"/><path d="M91 16l4 4 7-8" stroke="var(--accent-ink)" stroke-width="2.4"/></svg>
+    <b>Element zum Lesen auswählen</b><span>Nichts ausgewählt</span></div>`;
+}
+if (OFFICE) { setupOffice(); app.innerHTML = '<div class="loading">Wird geladen …</div>'; }
+
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const fmtNum = n => n == null ? '–' : n >= 1e9 ? (n / 1e9).toLocaleString(LOC, { maximumFractionDigits: 1 }) + T(' Mrd.', ' bn') : n >= 1e6 ? (n / 1e6).toLocaleString(LOC, { maximumFractionDigits: 1 }) + T(' Mio.', ' M') : Math.round(n).toLocaleString(LOC);
+const CONT = EN ? { EU: 'Europe', AS: 'Asia', AF: 'Africa', NA: 'North America', SA: 'South America', OC: 'Oceania' } : { EU: 'Europa', AS: 'Asien', AF: 'Afrika', NA: 'Nordamerika', SA: 'Südamerika', OC: 'Ozeanien' };
+
+/* ---------- data ---------- */
+let countries, world, us;
+try {
+  [countries, world, us] = await Promise.all(['data/countries.json', 'data/world.json', 'data/us.json'].map(u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); })));
+} catch (e) {
+  app.innerHTML = `<div class="loading">${T('Die Kartendaten konnten nicht geladen werden. Lade die Seite neu.', 'The map data could not be loaded. Reload the page.')}</div>`;
+  return;
+}
+const NAME_FIX = EN ? { CD: 'DR Congo', CG: 'Republic of the Congo', VA: 'Vatican City' } : { CD: 'Demokratische Republik Kongo', CG: 'Republik Kongo', CZ: 'Tschechien', VA: 'Vatikanstadt' };
+const EXTRA = {
+  GB: ['Großbritannien', 'England', 'UK'], US: ['USA', 'Amerika', 'Vereinigte Staaten von Amerika'], NL: ['Holland'],
+  CD: ['DR Kongo', 'Kongo Kinshasa', 'Zaire'], CG: ['Kongo', 'Kongo Brazzaville'], KR: ['Korea'], MM: ['Birma', 'Burma'],
+  CI: ['Elfenbeinküste', 'Cote dIvoire'], CV: ['Kap Verde'], SZ: ['Swasiland', 'Eswatini'], MK: ['Mazedonien'], TL: ['Osttimor'],
+  AE: ['VAE', 'Emirate'], CF: ['ZAR'], VA: ['Vatikan'], BA: ['Bosnien'], TW: ['Republik China'], PS: ['Palästina'], FM: ['Mikronesien']
+};
+const dnDe = new Intl.DisplayNames(['de'], { type: 'region' });
+const byCode = {};
+for (const c of countries) {
+  c.name = NAME_FIX[c.code] || (EN ? c.en : c.de);
+  const svg = c.flag.includes(' width=') ? c.flag : c.flag.replace('<svg ', '<svg width="640" height="480" ');
+  c.flagUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  let dn = null; try { dn = dnDe.of(c.code); } catch {}
+  const names = [c.name, c.de, c.en, dn, ...c.aliases, ...(EXTRA[c.code] || [])].filter(Boolean);
+  c.keys = [...new Set(names.flatMap(n => [norm(n), norm(umlautAlt(n))]))].filter(k => k.length > 1);
+  byCode[c.code] = c;
+}
+const NUM2CODE = {}; countries.forEach(c => { if (c.num) NUM2CODE[c.num] = c.code; });
+const NAME2CODE = { 'Kosovo': 'XK', 'N. Cyprus': 'CY', 'Somaliland': 'SO' };
+const worldFeatures = topojson.feature(world, world.objects.countries).features;
+worldFeatures.forEach(f => { f.code = NUM2CODE[f.id] || NAME2CODE[f.properties.name] || null; });
+const featuresOf = code => worldFeatures.filter(f => f.code === code);
+const mapCountries = countries.filter(c => featuresOf(c.code).length);
+
+// polygons close to the main landmass (drops far-flung territories for zoom and outlines)
+const mainCache = {};
+function mainGeom(code) {
+  if (mainCache[code]) return mainCache[code];
+  const polys = [];
+  for (const f of featuresOf(code)) {
+    const g = f.geometry; if (!g) continue;
+    if (g.type === 'Polygon') polys.push(g.coordinates); else if (g.type === 'MultiPolygon') polys.push(...g.coordinates);
+  }
+  const items = polys.map(p => { const geo = { type: 'Polygon', coordinates: p }; return { geo, area: d3.geoArea(geo), c: d3.geoCentroid(geo) }; });
+  const main = items.reduce((a, b) => b.area > a.area ? b : a);
+  const kept = items.filter(i => i === main || (d3.geoDistance(i.c, main.c) < 0.45));
+  return (mainCache[code] = { geo: { type: 'MultiPolygon', coordinates: kept.map(i => i.geo.coordinates) }, main, kept });
+}
+
+/* flag colours: rasterise each flag once and bucket pixels by hue */
+let flagColorsReady = null;
+function computeFlagColors() {
+  if (flagColorsReady) return flagColorsReady;
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 48;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  flagColorsReady = Promise.all(countries.map(c => new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, 64, 48); ctx.drawImage(img, 0, 0, 64, 48);
+      const d = ctx.getImageData(0, 0, 64, 48).data; const cnt = {};
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, s = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
+        let h = 0; if (mx !== mn) { h = mx === r ? ((g - b) / (mx - mn)) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4; h *= 60; if (h < 0) h += 360; }
+        let k;
+        if (l > 0.86 && s < 0.5) k = 'white'; else if (l < 0.13) k = 'black'; else if (s < 0.2) k = l > 0.6 ? 'white' : 'grey';
+        else if (h < 16 || h >= 335) k = 'red'; else if (h < 40) k = 'orange'; else if (h < 70) k = 'yellow'; else if (h < 170) k = 'green'; else if (h < 260) k = 'blue'; else k = 'purple';
+        cnt[k] = (cnt[k] || 0) + 1;
+      }
+      const tot = 64 * 48; c.colors = new Set(Object.keys(cnt).filter(k => cnt[k] / tot >= 0.03)); res();
+    };
+    img.onerror = () => { c.colors = new Set(); res(); };
+    img.src = c.flagUrl;
+  })));
+  return flagColorsReady;
+}
+
+/* ---------- autocomplete ---------- */
+function autocomplete(root, items, onPick, { placeholder = T('Land eintippen …', 'Type a country …'), up = false, exclude = () => false } = {}) {
+  root.innerHTML = `<div class="ac${up ? ' up' : ''}"><input id="ac-${Math.random().toString(36).slice(2, 7)}" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}"><ul role="listbox" hidden></ul></div>`;
+  const input = root.querySelector('input'), ul = root.querySelector('ul'), wrap = root.querySelector('.ac');
+  let list = [], sel = 0;
+  function search(q) {
+    const n = norm(q); if (!n) return [];
+    const scored = [];
+    for (const it of items) {
+      if (exclude(it)) continue;
+      let best = 9;
+      if (norm(it.label) === n) best = 0;
+      else if (norm(it.label).startsWith(n)) best = 1;
+      else if (it.keys.some(k => k === n)) best = 2;
+      else if (it.keys.some(k => k.startsWith(n))) best = 3;
+      else if (n.length >= 3 && it.words.some(w => w.startsWith(n))) best = 4;
+      else if (n.length >= 4 && it.keys.some(k => k.includes(n))) best = 5;
+      if (best < 9) scored.push([best, it]);
+    }
+    return scored.sort((a, b) => a[0] - b[0] || a[1].label.localeCompare(b[1].label, EN ? 'en' : 'de')).slice(0, 8).map(x => x[1]);
+  }
+  function render() {
+    ul.hidden = !list.length;
+    if (list.length && !up) wrap.classList.toggle('up', input.getBoundingClientRect().bottom > innerHeight * 0.62);
+    ul.innerHTML = list.map((it, i) => `<li role="option" data-i="${i}" aria-selected="${i === sel}">${it.icon ? `<img src="${it.icon}" alt="">` : ''}<span>${esc(it.label)}</span>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</li>`).join('');
+  }
+  function choose(it) { list = []; render(); input.value = ''; onPick(it); }
+  input.addEventListener('input', () => { list = search(input.value); sel = 0; render(); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { sel = Math.min(sel + 1, list.length - 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sel = Math.max(sel - 1, 0); render(); e.preventDefault(); }
+    else if (e.key === 'Escape') { list = []; render(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault(); e.stopPropagation();
+      if (list[sel]) choose(list[sel]);
+      else if (input.value.trim()) { wrap.classList.remove('shake'); void wrap.offsetWidth; wrap.classList.add('shake'); }
+    }
+  });
+  ul.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); choose(list[+li.dataset.i]); } });
+  input.addEventListener('blur', () => setTimeout(() => { list = []; render(); }, 120));
+  return { input, focus: () => input.focus({ preventScroll: true }), clear: () => { input.value = ''; list = []; render(); } };
+}
+const countryItems = countries.map(c => ({ id: c.code, label: c.name, keys: c.keys, words: c.name.split(/[\s-]+/).map(norm), c }));
+
+/* ---------- map drawing ---------- */
+const MAP_W = 960, MAP_H = 500;
+const worldProj = d3.geoNaturalEarth1().fitExtent([[6, 6], [MAP_W - 6, MAP_H - 6]], { type: 'Sphere' });
+const worldPath = d3.geoPath(worldProj);
+const worldD = new Map(worldFeatures.map(f => [f, worldPath(f)]));
+
+function worldSvg({ highlight = null, cls = '', w = MAP_W, h = MAP_H } = {}) {
+  return `<svg viewBox="0 0 ${w} ${h}" class="${cls}" role="img" aria-label="Weltkarte"><g class="zoomg">${worldFeatures.map(f => `<path class="land${f.code && f.code === highlight ? ' target' : ''}" data-code="${f.code || ''}" d="${worldD.get(f)}"/>`).join('')}</g></svg>`;
+}
+
+function outlineSvg(code, size = 400, cls = 'silhouette') {
+  const { geo, main } = mainGeom(code);
+  const proj = d3.geoAzimuthalEqualArea().rotate([-main.c[0], -main.c[1]]).fitExtent([[14, 14], [size - 14, size - 14]], geo);
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Umriss eines Landes"><path class="${cls}" d="${d3.geoPath(proj)(geo)}"/></svg>`;
+}
+
+/* ---------- results, stats, confetti ---------- */
+const GAMES = { flaggen: T('Flaggen', 'Flags'), karte: T('Weltkarte', 'World map'), umriss: T('Umrisse', 'Outlines'), grid: 'Geo-Grid', rankle: 'Rankle', usa: T('USA-Staaten', 'US states') };
+function celebrate(pct = 100) {
+  if (OFFICE || !window.confetti || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const n = 60 + Math.round(pct * 1.6);
+  confetti({ particleCount: n, spread: 80, startVelocity: 42, origin: { y: 0.65 }, zIndex: 70 });
+  setTimeout(() => {
+    confetti({ particleCount: Math.round(n / 2), angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, zIndex: 70 });
+    confetti({ particleCount: Math.round(n / 2), angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, zIndex: 70 });
+  }, 250);
+}
+function recordResult(g, pct, label) {
+  const h = store.get('history', []);
+  const e = { g, pct: Math.max(0, Math.min(100, Math.round(pct))), label, t: Date.now() };
+  h.push(e); store.set('history', h.slice(-400));
+  if (inDuel(g)) duel.entry = e.t;
+  return e;
+}
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.tm); toast.tm = setTimeout(() => { t.hidden = true; }, 3500);
+}
+
+/* ---------- 1:1 Duell: browser-to-browser via PeerJS ---------- */
+const duel = { peer: null, conn: null, code: null, host: false, oppName: '', game: null, seed: 0, settings: {}, me: null, opp: null, t0: 0, entry: null, decided: false };
+const connected = () => !!(duel.conn && duel.conn.open);
+const inDuel = g => connected() && duel.game === g;
+const duelRnd = (salt = 0) => mulberry((duel.seed ^ Math.imul(salt + 1, 0x9E3779B1)) >>> 0);
+const myName = () => store.get('name', '') || T('Gast', 'Guest');
+const send = m => { if (connected()) duel.conn.send(m); };
+const settingsFor = g => ['flaggen', 'karte', 'umriss', 'usa'].includes(g) ? store.get(g + ':settings', {}) : {};
+function duelReport(g, data) {
+  if (!inDuel(g)) return;
+  if (data.done) data.ms = Date.now() - duel.t0;
+  duel.me = data; send({ type: 'progress', game: g, seed: duel.seed, data }); renderDuelBar();
+}
+function newRound(g = duel.game) {
+  Object.assign(duel, { game: g, seed: Math.floor(Math.random() * 2 ** 31), settings: settingsFor(g), me: null, opp: null, decided: false, entry: null });
+  send({ type: 'start', game: g, seed: duel.seed, settings: duel.settings });
+  goTo(g);
+}
+function goTo(g) { if (location.hash === '#' + g) route(); else location.hash = g; }
+function outcome() {
+  const a = duel.me, b = duel.opp;
+  if (!a?.done || !b?.done) return null;
+  for (let i = 0; i < a.cmp.length; i++) if (a.cmp[i] !== b.cmp[i]) return { r: a.cmp[i] > b.cmp[i] ? 'win' : 'loss' };
+  if (a.ms !== b.ms) return { r: a.ms < b.ms ? 'win' : 'loss', time: true };
+  return { r: 'draw' };
+}
+function renderDuelBar() {
+  const bar = document.getElementById('duelbar');
+  document.getElementById('duel-open').classList.toggle('on', connected());
+  if (!connected()) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const opp = esc(duel.oppName || T('Gegner', 'Opponent'));
+  const here = location.hash.slice(1);
+  let mid;
+  if (!duel.game || here !== duel.game) {
+    mid = `<span>${T('Verbunden mit', 'Connected with')} <b>${opp}</b>. ${duel.game && GAMES[duel.game] ? `${T('Aktuelles Spiel', 'Current game')}: <a href="#${duel.game}">${GAMES[duel.game]}</a>. ` : ''}${T('Wer oben ein Spiel öffnet, startet es für euch beide.', 'Whoever opens a game at the top starts it for both of you.')}</span>`;
+  } else {
+    const o = outcome();
+    const lbl = d => d ? esc(d.label || '') + (d.done ? ' ✓' : '') : 'startet …';
+    mid = `<div class="who"><small>Du</small><span>${lbl(duel.me)}</span></div><span class="vs">VS</span><div class="who"><small>${opp}</small><span>${lbl(duel.opp)}</span></div>`;
+    if (o) mid += `<span class="outcome ${o.r}">${o.r === 'win' ? T('Du gewinnst!', 'You win!') : o.r === 'loss' ? `${opp} ${T('gewinnt', 'wins')}` : T('Unentschieden', 'Draw')}${o.time ? T(' (schneller)', ' (faster)') : ''}</span>`;
+    else if (duel.me?.done) mid += `<span class="who"><small>Status</small><span>${T('Warte auf', 'Waiting for')} ${opp} …</span></span>`;
+    if (o && !duel.decided) {
+      duel.decided = true;
+      if (o.r === 'win') celebrate(100);
+      const h = store.get('history', []); const e = h.find(x => x.t === duel.entry);
+      if (e) { e.duel = o.r; e.opp = duel.oppName; store.set('history', h); }
+    }
+  }
+  bar.innerHTML = `<div class="duelbar-in"><span class="live" aria-hidden="true"></span>${mid}<span class="spacer"></span>${duel.game && here === duel.game ? '<button class="btn sm" id="duel-again">Neue Runde für beide</button>' : ''}<button class="btn ghost sm" id="duel-leave">Duell beenden</button></div>`;
+  const again = document.getElementById('duel-again'); if (again) again.onclick = () => newRound(duel.game);
+  document.getElementById('duel-leave').onclick = () => { send({ type: 'bye' }); endDuel('Duell beendet.'); };
+}
+function endDuel(msg) {
+  const wasIn = duel.game && location.hash.slice(1) === duel.game;
+  try { duel.conn && duel.conn.close(); } catch {}
+  try { duel.peer && duel.peer.destroy(); } catch {}
+  Object.assign(duel, { peer: null, conn: null, code: null, game: null, me: null, opp: null });
+  renderDuelBar(); if (msg) toast(msg);
+  if (wasIn) route();
+}
+function onMsg(m) {
+  if (!m || typeof m !== 'object') return;
+  if (m.type === 'hello') {
+    duel.oppName = String(m.name || T('Gast', 'Guest')).slice(0, 24);
+    closeModal(); toast(`${T('Verbunden mit', 'Connected with')} ${duel.oppName}!`); renderDuelBar();
+    if (duel.host && GAMES[location.hash.slice(1)]) newRound(location.hash.slice(1));
+  } else if (m.type === 'start' && GAMES[m.game]) {
+    closeModal();
+    Object.assign(duel, { game: m.game, seed: m.seed >>> 0, settings: m.settings || {}, me: null, opp: null, decided: false, entry: null });
+    const s = m.settings || {}; if (Object.keys(s).length) store.set(m.game + ':settings', Object.assign(store.get(m.game + ':settings', {}), s));
+    goTo(m.game);
+  } else if (m.type === 'progress' && m.game === duel.game && m.seed === duel.seed) {
+    duel.opp = m.data; renderDuelBar();
+  } else if (m.type === 'bye') endDuel(`${duel.oppName || T('Dein Gegner', 'Your opponent')} ${T('hat das Duell verlassen.', 'left the duel.')}`);
+}
+function setupConn(conn) {
+  duel.conn = conn;
+  const timer = setTimeout(() => { if (!conn.open) failDuel('Die Verbindung kommt nicht zustande. Manche Netzwerke (z. B. Firmen- oder Schul-WLAN) blockieren direkte Verbindungen. Versucht es im Mobilfunknetz oder einem anderen WLAN.'); }, 15000);
+  conn.on('open', () => { clearTimeout(timer); conn.send({ type: 'hello', name: myName() }); });
+  conn.on('data', onMsg);
+  conn.on('close', () => { if (duel.conn === conn) endDuel('Die Verbindung wurde getrennt.'); });
+}
+function newPeer(id) {
+  if (!window.Peer) throw new Error('nopeer');
+  return id ? new Peer(id) : new Peer();
+}
+function failDuel(text) {
+  try { duel.peer && duel.peer.destroy(); } catch {}
+  Object.assign(duel, { peer: null, conn: null });
+  renderDuelBar(); modal('error', text);
+}
+const peerErr = e => e && e.type === 'peer-unavailable' ? 'Zu diesem Code gibt es kein offenes Duell. Prüfe den Code oder lass dir einen neuen schicken.'
+  : 'Der Duell-Server ist gerade nicht erreichbar. Prüfe deine Internetverbindung. In der Claude-Vorschau funktionieren Duelle nicht, nutze dafür die GitHub-Seite.';
+function hostDuel() {
+  const code = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+  let peer; try { peer = newPeer('atlasjagd-duell-' + code); } catch { return modal('error', peerErr()); }
+  duel.peer = peer; duel.host = true; modal('connecting', 'Code wird erstellt …');
+  peer.on('open', () => { if (connected() || duel.code) return; duel.code = code; modal('wait'); });
+  peer.on('connection', conn => { if (connected()) { conn.close(); return; } setupConn(conn); });
+  peer.on('error', e => { if (e.type === 'unavailable-id') { peer.destroy(); hostDuel(); } else if (!connected()) failDuel(peerErr(e)); });
+}
+function joinDuel(code) {
+  code = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5) return modal('menu', 'Der Code hat 5 Zeichen.');
+  let peer; try { peer = newPeer(); } catch { return modal('error', peerErr()); }
+  duel.peer = peer; duel.host = false; modal('connecting', 'Verbinde mit dem Duell …');
+  peer.on('open', () => setupConn(peer.connect('atlasjagd-duell-' + code, { reliable: true })));
+  peer.on('error', e => { if (!connected()) failDuel(peerErr(e)); });
+}
+function closeModal() { document.getElementById('duel-modal').hidden = true; }
+function modal(state, info = '') {
+  const m = document.getElementById('duel-modal'), c = document.getElementById('duel-card');
+  m.hidden = false;
+  const cancel = '<div class="modal-actions"><button class="btn ghost" id="dm-cancel">Abbrechen</button></div>';
+  if (state === 'menu') {
+    c.innerHTML = `<h2 id="duel-title">1:1 Duell</h2>
+      <p>Spiel live gegen jemanden auf einem anderen Gerät. Ihr bekommt genau dieselben Fragen. Wer mehr richtig hat, gewinnt. Bei Gleichstand entscheidet die Zeit.</p>
+      <label class="field">Dein Name<input id="dm-name" maxlength="24" autocomplete="nickname" value="${esc(store.get('name', ''))}" placeholder="z. B. Caro"></label>
+      <div class="duel-cols">
+        <div><h3>Duell erstellen</h3><p>Du bekommst einen Code, den du weitergibst.</p><button class="btn primary" id="dm-host">Code erstellen</button></div>
+        <div><h3>Duell beitreten</h3><label class="field">Code<input id="dm-code" maxlength="5" autocomplete="off" spellcheck="false" placeholder="K7F2Q" value="${esc(info && info.length === 5 ? info : '')}" style="text-transform:uppercase;letter-spacing:.1em"></label><button class="btn" id="dm-join">Beitreten</button></div>
+      </div>${info && info.length !== 5 ? `<p class="err">${esc(info)}</p>` : ''}
+      <div class="modal-actions"><button class="btn ghost" id="dm-cancel">Schließen</button></div>`;
+    const saveName = () => store.set('name', document.getElementById('dm-name').value.trim().slice(0, 24));
+    document.getElementById('dm-host').onclick = () => { saveName(); hostDuel(); };
+    document.getElementById('dm-join').onclick = () => { saveName(); joinDuel(document.getElementById('dm-code').value); };
+    document.getElementById('dm-code').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('dm-join').click(); });
+    document.getElementById(info && info.length === 5 ? 'dm-join' : 'dm-name').focus();
+  } else if (state === 'wait') {
+    const link = /^https?:$/.test(location.protocol) ? `${location.origin}${location.pathname}?duell=${duel.code}` : '';
+    c.innerHTML = `<h2 id="duel-title">Dein Duell-Code</h2><div class="duel-code">${duel.code}</div>
+      <p>Schick den Code an deine Mitspielerin oder deinen Mitspieler. Sie oder er tippt auf <b>1:1 Duell</b> und gibt ihn unter „Beitreten“ ein.${link ? ' Oder du schickst direkt diesen Link:' : ''}</p>
+      ${link ? `<div class="linkrow"><input id="dm-link" readonly value="${esc(link)}"><button class="btn" id="dm-copy">Kopieren</button></div>` : ''}
+      <p style="display:flex;gap:10px;align-items:center"><span class="live"></span>Warte auf Mitspieler …</p>${cancel}`;
+    const cp = document.getElementById('dm-copy');
+    if (cp) cp.onclick = () => { const i = document.getElementById('dm-link'); navigator.clipboard?.writeText(i.value).then(() => { cp.textContent = 'Kopiert'; }, () => { i.select(); }); if (!navigator.clipboard) i.select(); };
+  } else if (state === 'connecting') {
+    c.innerHTML = `<h2 id="duel-title">1:1 Duell</h2><p style="display:flex;gap:10px;align-items:center"><span class="live"></span>${esc(info)}</p>${cancel}`;
+  } else {
+    c.innerHTML = `<h2 id="duel-title">Das hat nicht geklappt</h2><p class="err">${esc(info)}</p><div class="modal-actions"><button class="btn ghost" id="dm-cancel">Schließen</button><button class="btn primary" id="dm-back">Nochmal versuchen</button></div>`;
+    document.getElementById('dm-back').onclick = () => modal('menu');
+  }
+  document.getElementById('dm-cancel').onclick = () => { if (!connected()) { try { duel.peer && duel.peer.destroy(); } catch {} duel.peer = null; } closeModal(); };
+}
+document.getElementById('theme-btn').onclick = toggleTheme; syncThemeBtns();
+{ const lb = document.getElementById('lang-btn'); lb.textContent = EN ? 'DE' : 'EN'; lb.title = T('Sprache: English', 'Language: Deutsch'); lb.setAttribute('aria-label', lb.title); lb.onclick = toggleLang; }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeBtns);
+document.getElementById('duel-open').onclick = () => { if (connected()) toast(T(`Du bist mit ${duel.oppName} verbunden. Beenden geht über die Leiste oben.`, `You are connected with ${duel.oppName}. End the duel from the bar at the top.`)); else modal('menu'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('duel-modal').hidden) document.getElementById('dm-cancel')?.click(); });
+window.addEventListener('beforeunload', () => send({ type: 'bye' }));
+
+/* ---------- quiz engine (Flaggen, Weltkarte, Umrisse) ---------- */
+function quiz(cfg) {
+  const key = cfg.key;
+  const st = Object.assign({ cont: 'ALL', len: 10, answer: 'type' }, store.get(key + ':settings', {}), inDuel(key) ? duel.settings : {});
+  const restart = () => inDuel(key) ? newRound(key) : start();
+  let queue, idx, score, streak, wrong, phase, current, choicesEl, ac;
+  const best = () => store.get(key + ':best', 0);
+
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>${cfg.title}</h1><p>${cfg.intro}</p></div>
+      <div class="stats">
+        <div class="stat"><span>Runde</span><b id="q-prog">–</b></div>
+        <div class="stat"><span>Punkte</span><b id="q-score">0</b></div>
+        <div class="stat"><span>Serie</span><b id="q-streak">0</b></div>
+        <div class="stat"><span>Rekord</span><b id="q-best">${best()}</b></div>
+      </div>
+    </div>
+    <div class="controls">
+      <select class="sel" id="q-cont" aria-label="Kontinent">
+        <option value="ALL">Alle Kontinente</option>${Object.entries(CONT).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+      </select>
+      <select class="sel" id="q-len" aria-label="Rundenzahl">
+        <option value="10">10 Fragen</option><option value="20">20 Fragen</option><option value="0">Alle Länder</option>
+      </select>
+      <div class="seg" role="group" aria-label="Antwortmodus">
+        <button data-a="type">Eintippen</button><button data-a="mc">4 Antworten</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="q-restart">Neu starten</button>
+    </div>
+    <div class="stage ${cfg.stageClass}" id="q-stage"></div>
+    <div class="dock" id="q-dock"></div>`;
+  const $s = id => document.getElementById(id);
+  $s('q-cont').value = st.cont; $s('q-len').value = String(st.len);
+  const segBtns = app.querySelectorAll('.seg button');
+  const syncSeg = () => segBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.a === st.answer)));
+  syncSeg();
+  const save = () => store.set(key + ':settings', st);
+  $s('q-cont').onchange = e => { st.cont = e.target.value; save(); restart(); };
+  $s('q-len').onchange = e => { st.len = +e.target.value; save(); restart(); };
+  segBtns.forEach(b => b.onclick = () => { st.answer = b.dataset.a; save(); syncSeg(); if (phase === 'ask') renderDock(); });
+  $s('q-restart').onclick = restart;
+  if (cfg.setup) cfg.setup($s('q-stage'));
+
+  function pool() { return cfg.pool.filter(c => st.cont === 'ALL' || c.cont === st.cont); }
+  function start() {
+    const p = shuffle(pool(), inDuel(key) ? duelRnd(0) : Math.random);
+    queue = st.len ? p.slice(0, st.len) : p; idx = 0; score = 0; streak = 0; wrong = [];
+    ask();
+  }
+  function updateStats() {
+    $s('q-prog').textContent = `${Math.min(idx + 1, queue.length)}/${queue.length}`;
+    $s('q-score').textContent = score; $s('q-streak').textContent = streak; $s('q-best').textContent = best();
+  }
+  function ask() {
+    phase = 'ask'; current = queue[idx]; updateStats();
+    duelReport(key, { label: `${T('Frage', 'Question')} ${idx + 1}/${queue.length} · ${score} ${T('Pkt.', 'pts')}` });
+    cfg.show($s('q-stage'), current);
+    renderDock();
+  }
+  function renderDock() {
+    const dock = $s('q-dock');
+    if (st.answer === 'mc') {
+      const p = pool();
+      const rnd = inDuel(key) ? duelRnd(idx + 1) : Math.random;
+      let others = shuffle(p.filter(c => c !== current && c.cont === current.cont), rnd).slice(0, 3);
+      if (others.length < 3) others = others.concat(shuffle(countries.filter(c => c !== current && !others.includes(c)), rnd).slice(0, 3 - others.length));
+      const opts = shuffle([current, ...others], rnd);
+      dock.innerHTML = `<div class="choices">${opts.map(o => `<button data-c="${o.code}">${esc(o.name)}</button>`).join('')}</div>
+        <div class="answer-row"><span class="spacer"></span><button class="btn ghost" id="q-skip">Weiß ich nicht</button></div>`;
+      choicesEl = dock.querySelector('.choices');
+      choicesEl.querySelectorAll('button').forEach(b => b.onclick = () => answer(byCode[b.dataset.c]));
+    } else {
+      dock.innerHTML = `<div class="answer-row"><div id="q-ac" style="flex:1;min-width:0"></div><button class="btn ghost" id="q-skip">Weiß ich nicht</button></div>`;
+      ac = autocomplete(document.getElementById('q-ac'), countryItems, it => answer(it.c), { placeholder: T('Welches Land ist das?', 'Which country is this?') });
+      ac.focus();
+    }
+    document.getElementById('q-skip').onclick = () => answer(null);
+  }
+  function answer(guess) {
+    if (phase !== 'ask') return;
+    phase = 'feedback';
+    const ok = guess === current;
+    if (ok) { score++; streak++; if (streak > best()) store.set(key + ':best', streak); }
+    else { streak = 0; wrong.push(current); }
+    updateStats();
+    duelReport(key, { label: `${T('Frage', 'Question')} ${idx + 1}/${queue.length} · ${score} ${T('Pkt.', 'pts')}` });
+    cfg.reveal && cfg.reveal($s('q-stage'), current, guess, ok);
+    const dock = $s('q-dock');
+    if (st.answer === 'mc' && choicesEl) {
+      choicesEl.querySelectorAll('button').forEach(b => { b.disabled = true; if (b.dataset.c === current.code) b.classList.add('ok'); else if (guess && b.dataset.c === guess.code) b.classList.add('bad'); });
+    }
+    const last = idx >= queue.length - 1;
+    const fb = document.createElement('div');
+    fb.className = 'feedback' + (ok ? '' : ' bad');
+    fb.innerHTML = `<img src="${current.flagUrl}" alt="">
+      <div class="txt"><b>${ok ? 'Richtig! ' : ''}${esc(current.name)}</b>
+      <span>${ok ? '' : (guess ? `${T('Deine Antwort', 'Your answer')}: ${esc(guess.name)} · ` : T('Übersprungen · ', 'Skipped · '))}${CONT[current.cont]}${current.capital ? T(' · Hauptstadt ', ' · Capital ') + esc(current.capital) : ''}${current.pop ? ' · ' + fmtNum(current.pop) + T(' Einwohner', ' people') : ''}</span></div>
+      <button class="btn primary" id="q-next">${last ? 'Ergebnis ansehen' : 'Weiter'} →</button>`;
+    if (st.answer === 'mc') { dock.querySelector('.answer-row')?.remove(); dock.appendChild(fb); } else { dock.innerHTML = ''; dock.appendChild(fb); }
+    const next = document.getElementById('q-next');
+    next.onclick = () => { if (last) finish(); else { idx++; ask(); } };
+    next.focus({ preventScroll: true });
+  }
+  function finish() {
+    phase = 'done'; idx = queue.length;
+    const pct = Math.round(score / queue.length * 100);
+    duelReport(key, { done: true, cmp: [score], label: `${score}/${queue.length} ${T('richtig', 'correct')}` });
+    recordResult(key, pct, `${score}/${queue.length}`);
+    $s('q-stage').innerHTML = `<div class="result">
+      <div class="verdict">${pct === 100 ? 'Perfekt!' : pct >= 80 ? 'Stark!' : pct >= 50 ? 'Gut gemacht!' : 'Weiter üben!'}</div>
+      <div class="coords">${pct}% richtig · ${pct >= 90 ? 'Kartograf·in' : pct >= 60 ? 'Weltreisende·r' : 'Entdecker·in'}</div>
+      <div class="big">${score}<small> / ${queue.length}</small></div>
+      ${wrong.length ? `<div>Diese hast du verpasst:</div><div class="mistakes">${wrong.map(c => `<span><img src="${c.flagUrl}" alt="">${esc(c.name)}</span>`).join('')}</div>` : '<div>Alles richtig. Stark!</div>'}
+      <button class="btn primary" id="q-again">Nochmal spielen</button></div>`;
+    $s('q-dock').innerHTML = '';
+    document.getElementById('q-again').onclick = restart;
+    document.getElementById('q-again').focus({ preventScroll: true });
+    celebrate(pct);
+  }
+  start();
+}
+
+/* Weltkarte: zoomable map with highlighted country */
+function mapQuiz() {
+  let svg, g, zoom, ringR = 0;
+  quiz({
+    key: 'karte', title: 'Weltkarte', stageClass: 'stage-map',
+    intro: 'Ein Land ist farbig markiert. Welches ist es? Ziehen und scrollen zum Erkunden.',
+    pool: mapCountries,
+    setup(stage) {
+      stage.innerHTML = worldSvg() + `<div class="zoombar"><button aria-label="Hineinzoomen" data-z="1.6">+</button><button aria-label="Herauszoomen" data-z="0.625">−</button><button aria-label="Ganze Welt" data-z="0">⌂</button></div><div class="maphint">Mausrad / Pinch zum Zoomen</div>`;
+      svg = d3.select(stage).select('svg'); g = svg.select('.zoomg');
+      g.append('circle').attr('class', 'ring').attr('r', 0);
+      zoom = d3.zoom().scaleExtent([1, 120]).translateExtent([[-200, -100], [MAP_W + 200, MAP_H + 100]])
+        .on('zoom', e => { g.attr('transform', e.transform); g.select('.ring').attr('r', ringR / e.transform.k); });
+      svg.call(zoom);
+      stage.querySelectorAll('.zoombar button').forEach(b => b.onclick = () => {
+        const z = +b.dataset.z; if (!z) svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); else svg.transition().duration(300).call(zoom.scaleBy, z);
+      });
+    },
+    show(stage, c) {
+      g.selectAll('path.land').attr('class', function () { return 'land' + (this.dataset.code === c.code ? ' target' : ''); });
+      // zoom to main landmass, ignoring pieces that wrap around the map edge
+      const { kept, main } = mainGeom(c.code);
+      const mc = worldProj(main.c);
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const k of kept) {
+        const b = worldPath.bounds(k.geo); const pc = worldProj(k.c);
+        if (!pc || Math.abs(pc[0] - mc[0]) > 200) continue;
+        x0 = Math.min(x0, b[0][0]); y0 = Math.min(y0, b[0][1]); x1 = Math.max(x1, b[1][0]); y1 = Math.max(y1, b[1][1]);
+      }
+      const dx = Math.max(x1 - x0, 1), dy = Math.max(y1 - y0, 1), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      const k = Math.max(1, Math.min(10, 0.2 / Math.max(dx / MAP_W, dy / MAP_H)));
+      const small = Math.max(dx, dy) * k < 14;
+      ringR = small ? 16 : 0;
+      g.select('.ring').attr('cx', cx).attr('cy', cy).attr('r', ringR / k).raise();
+      svg.transition().duration(800).call(zoom.transform, d3.zoomIdentity.translate(MAP_W / 2 - k * cx, MAP_H / 2 - k * cy).scale(k));
+    },
+    reveal(stage, c, guess, ok) {
+      g.selectAll(`path.land[data-code="${c.code}"]`).attr('class', 'land ' + (ok ? 'is-ok' : 'is-bad'));
+      if (guess && !ok) g.selectAll(`path.land[data-code="${guess.code}"]`).attr('class', 'land is-guess');
+    }
+  });
+}
+
+/* ---------- home ---------- */
+function home() {
+  if (OFFICE) return officeHome();
+  const fl = shuffle(countries.filter(c => c.pop > 5e6)).slice(0, 3);
+  const gridFlags = shuffle(countries).slice(0, 4);
+  const usPath = d3.geoPath();
+  const usStates = topojson.feature(us, us.objects.states).features;
+  app.innerHTML = `
+    <section class="hero">
+      <div class="coords">${T('52°31′N · 13°24′O &nbsp;/&nbsp; 197 Länder · 50 Bundesstaaten', '52°31′N · 13°24′E &nbsp;/&nbsp; 197 countries · 50 states')}</div>
+      <h1>Die Welt im Kopf, <em>Land für Land.</em></h1>
+      <p>Sechs Spiele für dein Geografiewissen: Flaggen, Karten, Umrisse, Kombinationsrätsel und Ranglisten.</p>
+    </section>
+    <section class="modes">
+      <a class="mode" href="#flaggen"><div class="thumb"><div class="flagstack">${fl.map(c => `<img src="${c.flagUrl}" alt="">`).join('')}</div></div>
+        <div class="body"><div class="row"><h2>Flaggen</h2><span class="tag">197 Flaggen</span></div><p>Eine Flagge erscheint. Zu welchem Land gehört sie?</p></div></a>
+      <a class="mode" href="#karte"><div class="thumb">${worldSvg({ highlight: 'BR' })}</div>
+        <div class="body"><div class="row"><h2>Weltkarte</h2><span class="tag">Zoom & Suche</span></div><p>Ein Land leuchtet auf der Karte. Erkennst du es?</p></div></a>
+      <a class="mode" href="#umriss"><div class="thumb" style="padding:14px">${outlineSvg('IT', 300)}</div>
+        <div class="body"><div class="row"><h2>Umrisse</h2><span class="tag">Nur die Form</span></div><p>Kein Kontext, keine Nachbarn. Nur die Silhouette.</p></div></a>
+      <a class="mode" href="#grid"><div class="thumb"><div class="minigrid">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => { const f = [0, 4, 5, 7].indexOf(i); return `<span style="${f >= 0 ? `background-image:url('${gridFlags[f].flagUrl}')` : ''}"></span>`; }).join('')}</div></div>
+        <div class="body"><div class="row"><h2>Geo-Grid</h2><span class="tag">Tägliches Rätsel</span></div><p>3×3 Felder, zwei Bedingungen pro Feld, zwölf Versuche.</p></div></a>
+      <a class="mode" href="#rankle"><div class="thumb"><div class="minirank"><div>Einwohner <b>#2</b></div><div>Fläche <b>#7</b></div><div>Lebenserwartung <b>#14</b></div></div></div>
+        <div class="body"><div class="row"><h2>Rankle</h2><span class="tag">8 Länder · 8 Kategorien</span></div><p>Ordne jedes Land der Kategorie zu, in der es am weitesten vorne liegt.</p></div></a>
+      <a class="mode" href="#usa"><div class="thumb"><svg viewBox="-60 -10 1040 640">${usStates.filter(s => s.properties.name !== 'District of Columbia').map(s => `<path class="st${s.properties.name === 'Texas' ? ' target' : ''}" d="${usPath(s)}"/>`).join('')}</svg></div>
+        <div class="body"><div class="row"><h2>USA-Staaten</h2><span class="tag">50 Staaten</span></div><p>Benennen, auf der Karte finden oder alle 50 aus dem Kopf.</p></div></a>
+    </section>
+    <div class="skin-switch"><button class="btn ghost" id="to-office">Büro-Ansicht: sieht aus wie ein Mailprogramm</button></div>`;
+  document.getElementById('to-office').onclick = () => { store.set('skin', 'office'); location.reload(); };
+}
+
+/* ---------- Geo-Grid ---------- */
+const EU = new Set('AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE'.split(' '));
+function gridCategories() {
+  const cats = [];
+  const add = (fam, group, label, test) => cats.push({ id: fam + ':' + label, fam, group, label, test });
+  for (const [k, v] of Object.entries(CONT)) add('cont', T('Kontinent', 'Continent'), v, c => c.cont === k);
+  for (const n of ['DE', 'FR', 'CN', 'RU', 'BR', 'IN', 'TR', 'SA', 'AT', 'CD', 'TZ', 'SD', 'HU', 'RS', 'IR', 'ZM', 'ES', 'AR'])
+    add('border', T('Grenzt an', 'Borders'), byCode[n].name, c => c.borders.includes(n));
+  const NB = T('Nachbarn', 'Neighbors'), LAGE = T('Lage', 'Location'), POP = T('Einwohner', 'Population'), AREA = T('Fläche', 'Area'), LANG = T('Amtssprache', 'Official language');
+  add('nb', NB, T('Keine Landgrenze', 'No land border'), c => c.borders.length === 0);
+  add('nb', NB, T('Genau 1–2 Nachbarländer', 'Exactly 1–2 neighbors'), c => c.borders.length >= 1 && c.borders.length <= 2);
+  add('nb', NB, T('Mind. 5 Nachbarländer', 'At least 5 neighbors'), c => c.borders.length >= 5);
+  add('geo', LAGE, T('Binnenstaat', 'Landlocked'), c => c.landlocked);
+  add('geo', LAGE, T('Südhalbkugel', 'Southern Hemisphere'), c => c.latlng[0] < 0);
+  add('geo2', LAGE, T('Westlich von Greenwich', 'West of Greenwich'), c => c.latlng[1] < 0);
+  add('pop', POP, T('Über 50 Mio.', 'Over 50 million'), c => c.pop > 5e7);
+  add('pop', POP, T('Unter 2 Mio.', 'Under 2 million'), c => c.pop != null && c.pop < 2e6);
+  add('pop', POP, T('10–50 Mio.', '10–50 million'), c => c.pop >= 1e7 && c.pop <= 5e7);
+  add('area', AREA, T('Über 1 Mio. km²', 'Over 1 million km²'), c => c.area > 1e6);
+  add('area', AREA, T('Unter 30.000 km²', 'Under 30,000 km²'), c => c.area < 3e4);
+  add('gdp', T('Wirtschaft', 'Economy'), T('BIP/Kopf über 30.000 $', 'GDP per capita over $30,000'), c => c.gdppc > 3e4);
+  add('gdp', T('Wirtschaft', 'Economy'), T('BIP/Kopf unter 2.000 $', 'GDP per capita under $2,000'), c => c.gdppc != null && c.gdppc < 2000);
+  add('life', T('Gesundheit', 'Health'), T('Lebenserwartung über 80', 'Life expectancy over 80'), c => c.life > 80);
+  add('lang', LANG, T('Englisch', 'English'), c => c.langs.includes('English'));
+  add('lang', LANG, T('Französisch', 'French'), c => c.langs.includes('French'));
+  add('lang', LANG, T('Spanisch', 'Spanish'), c => c.langs.includes('Spanish'));
+  add('lang', LANG, T('Arabisch', 'Arabic'), c => c.langs.includes('Arabic'));
+  add('lang', LANG, T('Portugiesisch', 'Portuguese'), c => c.langs.includes('Portuguese'));
+  add('org', T('Mitglied', 'Member'), T('EU-Mitglied', 'EU member'), c => EU.has(c.code));
+  add('org', T('Währung', 'Currency'), 'Euro', c => c.cur.includes('EUR'));
+  const COL = EN ? { red: 'Red', blue: 'Blue', green: 'Green', yellow: 'Yellow', black: 'Black', white: 'White' } : { red: 'Rot', blue: 'Blau', green: 'Grün', yellow: 'Gelb', black: 'Schwarz', white: 'Weiß' };
+  for (const [k, v] of Object.entries(COL)) add('flag', T('Flagge enthält', 'Flag contains'), v, c => c.colors && c.colors.has(k));
+  add('flag', T('Flagge', 'Flag'), T('Ohne Rot', 'No red'), c => c.colors && !c.colors.has('red'));
+  const letters = {}; countries.forEach(c => { const l = c.name[0].toUpperCase(); letters[l] = (letters[l] || 0) + 1; });
+  for (const l of Object.keys(letters).filter(l => letters[l] >= 9)) add('name', T('Name beginnt mit', 'Name starts with'), l, c => c.name[0].toUpperCase() === l);
+  if (EN) add('name', 'Name', 'Ends in “-ia”', c => /ia$/.test(c.name));
+  else add('name', 'Name', 'Endet auf „-ien“', c => /ien$/.test(c.name));
+  add('name', 'Name', T('Endet auf „-a“', 'Ends in “-a”'), c => /a$/.test(c.name));
+  add('name', 'Name', T('Höchstens 5 Buchstaben', 'At most 5 letters'), c => c.name.replace(/[^\p{L}]/gu, '').length <= 5);
+  add('name', 'Name', T('Mehrere Wörter', 'Several words'), c => /[\s-]/.test(c.name.trim()));
+  return cats;
+}
+function makePuzzle(rnd) {
+  const cats = gridCategories();
+  const weight = c => c.fam === 'border' ? 0.7 : c.fam === 'flag' ? 1.2 : 1;
+  const draw = () => { const tot = cats.reduce((s, c) => s + weight(c), 0); let r = rnd() * tot; for (const c of cats) { r -= weight(c); if (r <= 0) return c; } return cats[0]; };
+  for (let t = 0; t < 4000; t++) {
+    const rows = [], cols = [];
+    let ok = true;
+    for (let i = 0; i < 6 && ok; i++) {
+      let c, tries = 0;
+      do { c = draw(); tries++; } while (tries < 50 && ([...rows, ...cols].includes(c) || (i < 3 ? cols : rows).some(x => x.fam === c.fam && x.fam !== 'flag') || (i < 3 ? rows : cols).filter(x => x.fam === c.fam).length >= 2));
+      (i < 3 ? rows : cols).push(c);
+    }
+    if (new Set([...rows, ...cols]).size < 6) continue;
+    const answers = rows.map(r => cols.map(c => countries.filter(x => r.test(x) && c.test(x))));
+    if (answers.flat().some(a => a.length < 3)) continue;
+    if (answers.flat().filter(a => a.length > 40).length > 3) continue;
+    return { rows, cols, answers };
+  }
+  return null;
+}
+async function geoGrid() {
+  app.innerHTML = '<div class="loading">Flaggenfarben werden analysiert …</div>';
+  await computeFlagColors();
+  if (location.hash !== '#grid') return;
+  const today = new Date(); const dayKey = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  let mode = 'daily', puzzle, filled, guesses, used, active, over;
+  // fame proxy for the estimated rarity score: bigger economies get picked more often
+  const fame = c => (c.gdp || 1e9) ** 0.5 + (c.pop || 1e5) ** 0.5 * 30;
+
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>Geo-Grid</h1><p>Finde für jedes Feld ein Land, das zur Zeile und zur Spalte passt. Jedes Land darf nur einmal vorkommen. Du hast zwölf Versuche.</p></div>
+      <div class="stats"><div class="stat"><span>Richtig</span><b id="g-right">0/9</b></div><div class="stat"><span>Seltenheit</span><b id="g-rare">–</b></div></div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Rätselart"><button data-m="daily">Rätsel des Tages</button><button data-m="random">Zufälliges Rätsel</button></div>
+      <span class="spacer"></span><button class="btn ghost" id="g-give">Aufgeben</button><button class="btn primary" id="g-new">Neues Rätsel ↻</button>
+    </div>
+    <div class="gg-wrap">
+      <div class="gg" id="g-grid"></div>
+      <div class="side">
+        <div class="card" id="g-panel"><h3>Feld auswählen</h3><p>Tippe auf ein leeres Feld und suche dann ein passendes Land.</p></div>
+        <div class="card"><h3>Seltenheit</h3><p>Jede richtige Antwort bekommt einen geschätzten Anteil: Wie viele Spieler hätten dasselbe Land gewählt? Bekannte, große Länder zählen viel, seltene wenig. Leere Felder zählen 100. Je niedriger die Summe, desto besser.</p></div>
+      </div>
+    </div>`;
+  const segs = app.querySelectorAll('.seg button');
+  segs.forEach(b => b.onclick = () => { mode = b.dataset.m; newPuzzle(); });
+  document.getElementById('g-new').onclick = () => { if (inDuel('grid')) return newRound('grid'); mode = 'random'; newPuzzle(); };
+  if (inDuel('grid')) app.querySelector('.seg').hidden = true;
+  document.getElementById('g-give').onclick = () => { if (!over) end(); };
+
+  function newPuzzle() {
+    segs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
+    const rnd = inDuel('grid') ? duelRnd(0) : mulberry(mode === 'daily' ? dayKey : Math.floor(Math.random() * 1e9));
+    puzzle = makePuzzle(rnd);
+    filled = Array(9).fill(null); guesses = 12; used = new Set(); active = null; over = false;
+    render();
+    panelIdle();
+  }
+  function rarity(i, c) {
+    const list = puzzle.answers[Math.floor(i / 3)][i % 3].slice().sort((a, b) => fame(b) - fame(a));
+    const w = list.map((_, j) => 1 / (j + 1) ** 1.1); const tot = w.reduce((a, b) => a + b, 0);
+    return Math.max(1, Math.round(w[list.indexOf(c)] / tot * 100));
+  }
+  function render() {
+    const el = document.getElementById('g-grid');
+    const hd = c => `<div class="hd"><div><small>${esc(c.group)}</small>${esc(c.label)}</div></div>`;
+    let html = `<div class="corner"><div><b>${guesses}</b><br><span>Versuche</span></div></div>` + puzzle.cols.map(hd).join('');
+    for (let r = 0; r < 3; r++) {
+      html += hd(puzzle.rows[r]);
+      for (let cI = 0; cI < 3; cI++) {
+        const i = r * 3 + cI, f = filled[i];
+        if (f) html += `<button class="cell filled" data-i="${i}" aria-label="${esc(f.c.name)}"><span class="pct">${f.pct}%</span><img class="cf" src="${f.c.flagUrl}" alt=""><span class="lbl">${esc(f.c.name)}</span></button>`;
+        else html += `<button class="cell${active === i ? ' sel' : ''}" data-i="${i}" aria-label="Feld ${r + 1}/${cI + 1}">${over ? `<span class="cnt">${puzzle.answers[r][cI].length} Lösungen</span>` : ''}</button>`;
+      }
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.cell').forEach(b => b.onclick = () => {
+      const i = +b.dataset.i;
+      if (over) { showAnswers(i); return; }
+      if (filled[i]) return;
+      active = i; render(); panelSearch();
+    });
+    const right = filled.filter(Boolean).length;
+    document.getElementById('g-right').textContent = `${right}/9`;
+    document.getElementById('g-rare').textContent = right ? filled.reduce((s, f) => s + (f ? f.pct : 100), 0) : '–';
+    if (!over) duelReport('grid', { label: `${right}/9 ${T('Felder', 'cells')} · ${guesses} ${T('Versuche übrig', 'guesses left')}` });
+  }
+  function panelIdle(msg = '') {
+    document.getElementById('g-panel').innerHTML = `<h3>Feld auswählen</h3><p>Tippe auf ein leeres Feld und suche dann ein passendes Land.</p>${msg ? `<p class="msg ok" style="margin-top:8px">${msg}</p>` : ''}`;
+  }
+  function panelSearch() {
+    const r = puzzle.rows[Math.floor(active / 3)], c = puzzle.cols[active % 3];
+    const p = document.getElementById('g-panel');
+    p.innerHTML = `<h3>${esc(r.label)} × ${esc(c.label)}</h3><p>${esc(r.group)}: ${esc(r.label)} · ${esc(c.group)}: ${esc(c.label)}</p><div id="g-ac" style="margin-top:10px"></div><div class="msg" id="g-msg"></div>`;
+    const ac = autocomplete(document.getElementById('g-ac'), countryItems, it => guess(it.c), { placeholder: T('Land suchen …', 'Search country …'), exclude: it => used.has(it.id) });
+    ac.focus();
+  }
+  function guess(c) {
+    const i = active, msg = document.getElementById('g-msg');
+    if (used.has(c.code)) { msg.className = 'msg bad'; msg.textContent = T(`${c.name} ist schon im Grid.`, `${c.name} is already in the grid.`); return; }
+    guesses--;
+    const r = puzzle.rows[Math.floor(i / 3)], col = puzzle.cols[i % 3];
+    if (r.test(c) && col.test(c)) {
+      filled[i] = { c, pct: rarity(i, c) }; used.add(c.code); active = null;
+      render();
+      if (guesses === 0 || filled.every(Boolean)) end(); else panelIdle(T(`${c.name} passt!`, `${c.name} fits!`));
+    } else {
+      render();
+      const why = [!r.test(c) && T(`nicht „${r.label}“`, `not “${r.label}”`), !col.test(c) && T(`nicht „${col.label}“`, `not “${col.label}”`)].filter(Boolean).join(T(' und ', ' and '));
+      if (guesses === 0) { end(); return; }
+      msg.className = 'msg bad'; msg.textContent = `${c.name}: ${why}. ${T(`Noch ${guesses} Versuche.`, `${guesses} guesses left.`)}`;
+    }
+  }
+  function end() {
+    over = true; active = null; render();
+    const right = filled.filter(Boolean).length, score = filled.reduce((s, f) => s + (f ? f.pct : 100), 0);
+    const lbl = `${right}/9 ${T('Felder', 'cells')} · ${T('Seltenheit', 'Rarity')} ${score}`;
+    duelReport('grid', { done: true, cmp: [right, -score], label: lbl });
+    recordResult('grid', right / 9 * 100, lbl);
+    celebrate(right / 9 * 100);
+    document.getElementById('g-panel').innerHTML = `<h3>${right === 9 ? T('Grid komplett!', 'Grid complete!') : T(`${right} von 9 Feldern`, `${right} of 9 cells`)}</h3><p>${T('Seltenheits-Score', 'Rarity score')}: <b>${score}</b>. ${T('Tippe auf ein Feld, um alle möglichen Lösungen zu sehen.', 'Tap a cell to see all possible answers.')}</p><div id="g-ans"></div>`;
+  }
+  function showAnswers(i) {
+    const list = puzzle.answers[Math.floor(i / 3)][i % 3];
+    const r = puzzle.rows[Math.floor(i / 3)], c = puzzle.cols[i % 3];
+    document.getElementById('g-ans').innerHTML = `<p style="margin-top:10px"><b>${esc(r.label)} × ${esc(c.label)}</b> (${list.length})</p><div class="anslist">${list.map(x => `<span>${esc(x.name)}</span>`).join('')}</div>`;
+  }
+  newPuzzle();
+}
+
+/* ---------- Rankle ---------- */
+const RANK_CATS = [
+  { k: 'pop', label: T('Einwohner', 'Population'), sub: T('meiste Menschen', 'most people'), fmt: fmtNum },
+  { k: 'area', label: T('Fläche', 'Area'), sub: T('größte Fläche', 'largest area'), fmt: v => fmtNum(v) + ' km²' },
+  { k: 'gdp', label: T('Bruttoinlandsprodukt', 'GDP'), sub: T('größte Wirtschaft', 'largest economy'), fmt: v => fmtNum(v) + ' $' },
+  { k: 'gdppc', label: T('BIP pro Kopf', 'GDP per capita'), sub: T('reichste Menschen', 'richest people'), fmt: v => fmtNum(v) + ' $' },
+  { k: 'density', label: T('Bevölkerungsdichte', 'Population density'), sub: T('am dichtesten besiedelt', 'most densely populated'), fmt: v => fmtNum(v) + '/km²' },
+  { k: 'life', label: T('Lebenserwartung', 'Life expectancy'), sub: T('längstes Leben', 'longest lives'), fmt: v => v.toFixed(1) + T(' J.', ' yrs') },
+  { k: 'forest', label: T('Waldanteil', 'Forest cover'), sub: T('meister Wald in %', 'most forest in %'), fmt: v => v.toFixed(0) + ' %' },
+  { k: 'birth', label: T('Geburtenrate', 'Birth rate'), sub: T('Geburten je 1.000 Einw.', 'births per 1,000 people'), fmt: v => v.toFixed(1) + ' ‰' },
+  { k: 'urban', label: T('Stadtbevölkerung', 'Urban population'), sub: T('Anteil in Städten', 'share living in cities'), fmt: v => v.toFixed(0) + ' %' },
+  { k: 'nb', label: T('Nachbarländer', 'Neighboring countries'), sub: T('meiste Landgrenzen', 'most land borders'), fmt: v => v }
+];
+countries.forEach(c => { c.nb = c.borders.length; });
+const RANKS = {};
+for (const cat of RANK_CATS) {
+  const vals = countries.filter(c => c[cat.k] != null).map(c => c[cat.k]).sort((a, b) => b - a);
+  RANKS[cat.k] = new Map(countries.filter(c => c[cat.k] != null).map(c => [c.code, vals.indexOf(c[cat.k]) + 1]));
+}
+function rankle() {
+  const eligible = countries.filter(c => RANK_CATS.every(cat => c[cat.k] != null) && c.pop > 1e6);
+  let cats, picks, idx, assign;
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>Rankle</h1><p>${T(`Acht Länder kommen nacheinander. Ordne jedes einer Kategorie zu, in der es weltweit möglichst weit vorne liegt (Platz 1 von ${countries.length}). Jede Kategorie nur einmal. Niedrigste Summe gewinnt.`, `Eight countries come one after another. Assign each to a category where it ranks as high as possible worldwide (rank 1 of ${countries.length}). Each category only once. Lowest total wins.`)}</p></div>
+      <div class="stats"><div class="stat"><span>Land</span><b id="r-prog">1/8</b></div><div class="stat"><span>Summe</span><b id="r-sum">0</b></div><div class="stat"><span>Bestwert</span><b id="r-best">${store.get('rankle:best', '–')}</b></div></div>
+    </div>
+    <div class="controls"><span class="spacer"></span><button class="btn ghost" id="r-new">Neue Runde</button></div>
+    <div class="rk"><div id="r-left"></div><div class="rk-list" id="r-list"></div></div>`;
+  const restart = () => inDuel('rankle') ? newRound('rankle') : start();
+  document.getElementById('r-new').onclick = restart;
+  function start() {
+    const rnd = inDuel('rankle') ? duelRnd(0) : Math.random;
+    cats = shuffle(RANK_CATS, rnd).slice(0, 8);
+    picks = shuffle(eligible, rnd).slice(0, 8); idx = 0; assign = {};
+    duelReport('rankle', { label: T('Land 1/8 · Summe 0', 'Country 1/8 · Sum 0') });
+    render();
+  }
+  const sum = () => Object.entries(assign).reduce((s, [k, c]) => s + RANKS[k].get(c.code), 0);
+  function render(flashK) {
+    const c = picks[idx];
+    document.getElementById('r-prog').textContent = `${Math.min(idx + 1, 8)}/8`;
+    document.getElementById('r-sum').textContent = sum();
+    document.getElementById('r-left').innerHTML = c ? `<div class="rk-country"><div class="coords">Land ${idx + 1} von 8</div><img src="${c.flagUrl}" alt=""><b>${esc(c.name)}</b><div class="facts">${CONT[c.cont]}${c.capital ? ' · ' + esc(c.capital) : ''}</div><p class="facts" style="margin:0">Wähle rechts eine Kategorie.</p></div>` : resultCard();
+    document.getElementById('r-list').innerHTML = cats.map(cat => {
+      const a = assign[cat.k];
+      if (a) return `<div class="rk-row done${flashK === cat.k ? ' flash' : ''}"><div class="cat">${esc(cat.label)}<small>${esc(cat.fmt(a[cat.k]))}</small></div><div class="who"><img src="${a.flagUrl}" alt="">${esc(a.name)}<span class="rank">#${RANKS[cat.k].get(a.code)}</span></div></div>`;
+      return `<button class="rk-row" data-k="${cat.k}" ${c ? '' : 'disabled'}><div class="cat">${esc(cat.label)}<small>${esc(cat.sub)}</small></div><span class="rank" style="color:var(--muted)">?</span></button>`;
+    }).join('') + `<div class="rk-total"><span>Summe der Plätze</span><b>${sum()}</b></div>`;
+    const again = document.getElementById('r-again'); if (again) again.onclick = restart;
+    document.querySelectorAll('#r-list button.rk-row').forEach(b => b.onclick = () => { assign[b.dataset.k] = picks[idx]; idx++; if (idx === 8) finish(); else duelReport('rankle', { label: `${T('Land', 'Country')} ${idx + 1}/8 · ${T('Summe', 'Sum')} ${sum()}` }); render(b.dataset.k); });
+  }
+  function optimal() {
+    // assignment by DP over subsets of categories
+    const n = 8, INF = 1e9, dp = new Array(1 << n).fill(INF), from = new Array(1 << n).fill(-1); dp[0] = 0;
+    for (let m = 0; m < 1 << n; m++) {
+      if (dp[m] === INF) continue;
+      const i = popcount(m); if (i >= n) continue;
+      for (let j = 0; j < n; j++) if (!(m & 1 << j)) {
+        const v = dp[m] + RANKS[cats[j].k].get(picks[i].code);
+        if (v < dp[m | 1 << j]) { dp[m | 1 << j] = v; from[m | 1 << j] = j; }
+      }
+    }
+    let m = (1 << n) - 1; const res = [];
+    while (m) { const j = from[m]; const i = popcount(m) - 1; res[i] = cats[j]; m &= ~(1 << j); }
+    return { total: dp[(1 << n) - 1], res };
+  }
+  function popcount(m) { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; }
+  let opt;
+  function finish() {
+    opt = optimal();
+    const s = sum(), b = store.get('rankle:best', null);
+    if (b == null || s < b) store.set('rankle:best', s);
+    duelReport('rankle', { done: true, cmp: [-s], label: `${T('Summe', 'Sum')} ${s}` });
+    recordResult('rankle', opt.total / s * 100, `${T('Summe', 'Sum')} ${s} (optimal ${opt.total})`);
+    setTimeout(() => celebrate(opt.total / s * 100), 100);
+    document.getElementById('r-best').textContent = store.get('rankle:best', '–');
+  }
+  function resultCard() {
+    const s = sum();
+    return `<div class="rk-country"><div class="coords">Ergebnis</div><b style="font-size:54px">${s}</b>
+      <p class="facts" style="margin:0">${T('Bestmögliche Summe', 'Best possible sum')}: ${opt.total}${s === opt.total ? T(' – perfekt gelöst!', ' – solved perfectly!') : ''}</p>
+      <table class="opt">${picks.map((c, i) => `<tr><td>${esc(c.name)}</td><td>${esc(opt.res[i].label)}</td><td>#${RANKS[opt.res[i].k].get(c.code)}</td></tr>`).join('')}</table>
+      <button class="btn primary" id="r-again">Neue Runde</button></div>`;
+  }
+  start();
+}
+
+/* ---------- USA ---------- */
+const US_DE = { California: 'Kalifornien' };
+const US_ALIAS = { 'New Mexico': ['Neumexiko', 'Neu-Mexiko'], 'North Carolina': ['Nord-Carolina', 'Nordcarolina'], 'South Carolina': ['Süd-Carolina', 'Südcarolina'], 'North Dakota': ['Norddakota', 'Nord-Dakota'], 'South Dakota': ['Süddakota', 'Süd-Dakota'], 'Pennsylvania': ['Pennsylvanien'], 'Virginia': ['Virginien'], 'West Virginia': ['Westvirginia', 'West-Virginia', 'Westvirginien'], 'New York': ['New York State'], 'Hawaii': ['Hawai'], 'Washington': ['Washington State'] };
+function usa() {
+  const path = d3.geoPath();
+  const feats = topojson.feature(us, us.objects.states).features;
+  const states = feats.filter(f => f.properties.name !== 'District of Columbia').map(f => {
+    const en = f.properties.name, label = (EN ? null : US_DE[en]) || en;
+    const keys = [...new Set([en, label, ...(US_ALIAS[en] || [])].flatMap(n => [norm(n), norm(umlautAlt(n))]))];
+    return { id: f.id, en, label, keys, words: label.split(/\s+/).map(norm), f, area: path.area(f) };
+  });
+  const byId = Object.fromEntries(states.map(s => [s.id, s]));
+  const st = Object.assign({ mode: 'name' }, store.get('usa:settings', {}), inDuel('usa') ? duel.settings : {});
+  const restart = () => inDuel('usa') ? newRound('usa') : start();
+  let queue, idx, score, phase, current, found, timer, t0, ac;
+
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>USA-Staaten</h1><p id="u-intro"></p></div>
+      <div class="stats"><div class="stat"><span id="u-l1">Runde</span><b id="u-prog">–</b></div><div class="stat"><span>Punkte</span><b id="u-score">0</b></div><div class="stat"><span id="u-l3">Rekord</span><b id="u-best">–</b></div></div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Spielart"><button data-m="name">Benennen</button><button data-m="find">Finden</button><button data-m="all">Alle 50</button></div>
+      <span class="spacer"></span><button class="btn ghost" id="u-restart">Neu starten</button>
+    </div>
+    <div class="stage us-stage" id="u-stage"><svg viewBox="-10 -10 985 630" id="u-svg">
+      ${feats.map(f => `<path class="st${f.properties.name === 'District of Columbia' ? ' dc' : ''}" data-id="${f.id}" d="${path(f)}"><title>${f.properties.name === 'District of Columbia' ? 'Washington, D.C.' : ''}</title></path>`).join('')}
+      <g id="u-labels"></g></svg></div>
+    <div class="dock" id="u-dock"></div>`;
+  const svgEl = document.getElementById('u-svg');
+  const segs = app.querySelectorAll('.seg button');
+  segs.forEach(b => b.onclick = () => { st.mode = b.dataset.m; store.set('usa:settings', st); restart(); });
+  document.getElementById('u-restart').onclick = restart;
+  svgEl.addEventListener('click', e => { const p = e.target.closest('path.st:not(.dc)'); if (p && st.mode === 'find' && phase === 'ask') clickState(byId[p.dataset.id]); });
+
+  const paint = (id, cls) => { const p = svgEl.querySelector(`path[data-id="${id}"]`); if (p) p.setAttribute('class', 'st' + (cls ? ' ' + cls : '')); };
+  const resetPaint = () => svgEl.querySelectorAll('path.st:not(.dc)').forEach(p => p.setAttribute('class', 'st'));
+  const label = s => { const [x, y] = path.centroid(s.f); document.getElementById('u-labels').insertAdjacentHTML('beforeend', s.area > 900 ? `<text class="us-label" x="${x}" y="${y + 3}">${esc(s.label)}</text>` : ''); };
+  const bestKey = () => 'usa:best:' + st.mode;
+
+  function start() {
+    clearInterval(timer);
+    segs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === st.mode)));
+    resetPaint(); document.getElementById('u-labels').innerHTML = '';
+    svgEl.parentElement.classList.toggle('clickable', st.mode === 'find');
+    queue = shuffle(states, inDuel('usa') ? duelRnd(0) : Math.random); idx = 0; score = 0; found = new Set();
+    const best = store.get(bestKey(), null);
+    document.getElementById('u-best').textContent = best == null ? '–' : (st.mode === 'all' ? best + '/50' : best);
+    document.getElementById('u-intro').textContent = {
+      name: T('Ein Staat ist farbig markiert. Tippe seinen Namen ein.', 'A state is highlighted. Type its name.'),
+      find: T('Ein Staat wird genannt. Klicke ihn auf der Karte an.', 'A state is named. Click it on the map.'),
+      all: T('Tippe so viele Staaten wie möglich. Richtige Namen werden sofort eingetragen. 10 Minuten Zeit.', 'Type as many states as you can. Correct names are filled in right away. You have 10 minutes.')
+    }[st.mode];
+    document.getElementById('u-l1').textContent = st.mode === 'all' ? 'Zeit' : 'Runde';
+    if (st.mode === 'all') startAll(); else ask();
+  }
+  function stats() {
+    if (st.mode !== 'all') document.getElementById('u-prog').textContent = `${Math.min(idx + 1, 50)}/50`;
+    document.getElementById('u-score').textContent = st.mode === 'all' ? `${found.size}/50` : score;
+  }
+  function ask() {
+    phase = 'ask'; current = queue[idx]; stats();
+    const dock = document.getElementById('u-dock');
+    if (st.mode === 'name') {
+      paint(current.id, 'target');
+      dock.innerHTML = `<div class="answer-row"><div id="u-ac" style="flex:1;min-width:0"></div><button class="btn ghost" id="u-skip">Weiß ich nicht</button></div>`;
+      ac = autocomplete(document.getElementById('u-ac'), states, s => answer(s), { placeholder: T('Welcher Staat ist das?', 'Which state is this?'), up: true });
+      ac.focus();
+    } else {
+      dock.innerHTML = `<div class="answer-row" style="align-items:center"><div class="us-prompt">${T('Wo liegt', 'Where is')} <span style="color:var(--teal)">${esc(current.label)}</span>?</div><span class="spacer"></span><button class="btn ghost" id="u-skip">Zeig es mir</button></div>`;
+    }
+    document.getElementById('u-skip').onclick = () => answer(null);
+  }
+  function clickState(s) { answer(s); }
+  function answer(g) {
+    if (phase !== 'ask') return; phase = 'feedback';
+    const ok = g === current;
+    if (ok) score++;
+    duelReport('usa', { label: `${T('Staat', 'State')} ${idx + 1}/50 · ${score} ${T('Pkt.', 'pts')}` });
+    paint(current.id, ok ? 'found' : 'missed');
+    if (g && !ok) paint(g.id, 'guess');
+    label(current); stats();
+    const last = idx >= 49;
+    const dock = document.getElementById('u-dock');
+    dock.innerHTML = `<div class="feedback${ok ? '' : ' bad'}"><div class="txt"><b>${ok ? 'Richtig! ' : ''}${esc(current.label)}</b><span>${ok ? '' : g ? `${T('Deine Antwort', 'Your answer')}: ${esc(g.label)}` : T('Übersprungen', 'Skipped')}</span></div><button class="btn primary" id="u-next">${last ? 'Ergebnis' : 'Weiter'} →</button></div>`;
+    const nx = document.getElementById('u-next');
+    nx.onclick = () => {
+      if (g && !ok) paint(g.id, found.has(g.id) ? 'found' : '');
+      if (last) return finish();
+      idx++; ask();
+    };
+    if (ok) found.add(current.id);
+    nx.focus({ preventScroll: true });
+  }
+  function finish() {
+    phase = 'done';
+    const b = store.get(bestKey(), null); if (b == null || score > b) store.set(bestKey(), score);
+    document.getElementById('u-best').textContent = store.get(bestKey());
+    document.getElementById('u-dock').innerHTML = `<div class="feedback"><div class="txt"><b>${T(`${score} von 50 richtig`, `${score} of 50 correct`)}</b><span>Grün: gewusst · Rot: verpasst</span></div><button class="btn primary" id="u-again">Nochmal</button></div>`;
+    document.getElementById('u-again').onclick = restart;
+    duelReport('usa', { done: true, cmp: [score], label: `${score}/50 ${T('richtig', 'correct')}` });
+    recordResult('usa', score * 2, `${score}/50 · ${st.mode === 'find' ? T('Finden', 'Find') : T('Benennen', 'Name')}`);
+    celebrate(score * 2);
+  }
+  function startAll() {
+    phase = 'all'; t0 = Date.now(); const LIMIT = 600;
+    const dock = document.getElementById('u-dock');
+    dock.innerHTML = `<div class="answer-row"><div class="ac" style="flex:1;min-width:0"><input id="u-all" type="text" autocomplete="off" spellcheck="false" placeholder="${T('Staat eintippen …', 'Type a state …')}" aria-label="${T('Staat eintippen', 'Type a state')}"></div><button class="btn ghost" id="u-give">Aufgeben</button></div><div class="found-list" id="u-found"></div>`;
+    const input = document.getElementById('u-all');
+    input.focus({ preventScroll: true });
+    input.addEventListener('input', () => {
+      const n = norm(input.value);
+      const s = states.find(s => !found.has(s.id) && s.keys.includes(n));
+      if (s) { found.add(s.id); paint(s.id, 'found'); label(s); input.value = ''; stats(); listFound(); duelReport('usa', { label: `${found.size}/50 ${T('gefunden', 'found')}` }); if (found.size === 50) endAll(); }
+    });
+    document.getElementById('u-give').onclick = endAll;
+    const tick = () => {
+      const left = Math.max(0, LIMIT - Math.floor((Date.now() - t0) / 1000));
+      document.getElementById('u-prog').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+      if (!left) endAll();
+    };
+    tick(); timer = setInterval(tick, 500); stats(); listFound(); duelReport('usa', { label: `0/50 ${T('gefunden', 'found')}` });
+  }
+  function listFound(missed) {
+    const el = document.getElementById('u-found'); if (!el) return;
+    const f = states.filter(s => found.has(s.id)).sort((a, b) => a.label.localeCompare(b.label));
+    el.innerHTML = f.map(s => `<span>${esc(s.label)}</span>`).join('') + (missed || []).map(s => `<span class="miss">${esc(s.label)}</span>`).join('');
+  }
+  function endAll() {
+    if (phase !== 'all') return; phase = 'done'; clearInterval(timer);
+    const missed = states.filter(s => !found.has(s.id)).sort((a, b) => a.label.localeCompare(b.label));
+    missed.forEach(s => paint(s.id, 'missed'));
+    const b = store.get(bestKey(), null); if (b == null || found.size > b) store.set(bestKey(), found.size);
+    document.getElementById('u-best').textContent = store.get(bestKey()) + '/50';
+    const secs = Math.floor((Date.now() - t0) / 1000);
+    const dock = document.getElementById('u-dock');
+    dock.innerHTML = `<div class="feedback${found.size === 50 ? '' : ' bad'}"><div class="txt"><b>${T(`${found.size} von 50 Staaten`, `${found.size} of 50 states`)}</b><span>${T('in', 'in')} ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} ${T('Minuten', 'minutes')}${missed.length ? T(' · Rot markiert: verpasst', ' · Red: missed') : ''}</span></div><button class="btn primary" id="u-again">Nochmal</button></div><div class="found-list" id="u-found"></div>`;
+    listFound(missed);
+    document.getElementById('u-again').onclick = restart;
+    duelReport('usa', { done: true, cmp: [found.size], label: `${found.size}/50 ${T('gefunden', 'found')}` });
+    recordResult('usa', found.size * 2, `${found.size}/50 · ${T('Alle 50', 'All 50')}`);
+    celebrate(found.size * 2);
+  }
+  start();
+  return () => clearInterval(timer);
+}
+
+/* ---------- Statistik ---------- */
+function statsPage() {
+  const h = store.get('history', []);
+  const avg = a => a.length ? Math.round(a.reduce((s, x) => s + x.pct, 0) / a.length) : null;
+  const duels = h.filter(x => x.duel);
+  const wins = duels.filter(x => x.duel === 'win').length;
+  const fmtT = t => new Date(t).toLocaleDateString(LOC, { day: '2-digit', month: '2-digit' }) + ' ' + new Date(t).toLocaleTimeString(LOC, { hour: '2-digit', minute: '2-digit' });
+  const bestOf = g => g === 'rankle' ? store.get('rankle:best', null) : null;
+  app.innerHTML = `
+    <div class="game-head"><div><h1>Deine Statistik</h1><p>Alle beendeten Spiele auf diesem Gerät. Die Werte sind in Prozent umgerechnet, damit du die Spiele vergleichen kannst.</p></div></div>
+    <div class="tiles">
+      <div class="tile"><span>Spiele beendet</span><b>${h.length}</b></div>
+      <div class="tile"><span>Ø Ergebnis</span><b>${h.length ? avg(h) + '%' : '–'}</b></div>
+      <div class="tile"><span>Perfekte Runden</span><b>${h.filter(x => x.pct === 100).length}</b></div>
+      <div class="tile"><span>Duelle gewonnen</span><b>${duels.length ? `${wins}/${duels.length}` : '–'}</b></div>
+    </div>
+    <div class="statgrid">${Object.entries(GAMES).map(([g, name]) => {
+      const list = h.filter(x => x.g === g);
+      const best = list.length ? Math.max(...list.map(x => x.pct)) : null;
+      const streak = ['flaggen', 'karte', 'umriss'].includes(g) ? store.get(g + ':best', 0) : null;
+      return `<section class="statcard">
+        <div class="row"><h3>${name}</h3><a href="#${g}">Spielen →</a></div>
+        <div class="kv"><div><span>Gespielt</span><b>${list.length}</b></div><div><span>Bestes</span><b>${best == null ? '–' : best + '%'}</b></div><div><span>${streak != null ? 'Beste Serie' : g === 'rankle' ? 'Beste Summe' : 'Schnitt'}</span><b>${streak != null ? streak : g === 'rankle' ? (bestOf(g) ?? '–') : (list.length ? avg(list) + '%' : '–')}</b></div></div>
+        ${list.length ? `<div class="spark" title="Letzte Runden">${list.slice(-16).map(x => `<i class="${x.duel ? 'duel' : ''}" style="height:${Math.max(4, x.pct)}%"></i>`).join('')}</div>
+        <ul class="hist">${list.slice(-4).reverse().map(x => `<li><span>${esc(x.label)}${x.duel ? `<span class="pill ${x.duel}">${x.duel === 'win' ? T('Sieg', 'Win') : x.duel === 'loss' ? T('Niederlage', 'Loss') : T('Remis', 'Draw')}${x.opp ? ' vs ' + esc(x.opp) : ''}</span>` : ''}</span><time>${fmtT(x.t)}</time></li>`).join('')}</ul>`
+        : '<p class="empty">Noch keine Runde gespielt.</p>'}
+      </section>`;
+    }).join('')}</div>
+    <div class="controls" style="margin-top:20px"><span class="spacer"></span><button class="btn ghost" id="s-reset">Statistik zurücksetzen</button></div>`;
+  const rb = document.getElementById('s-reset');
+  rb.onclick = () => {
+    if (rb.dataset.armed) { store.set('history', []); statsPage(); toast('Statistik gelöscht.'); return; }
+    rb.dataset.armed = '1'; rb.textContent = 'Wirklich alles löschen?'; rb.classList.add('primary');
+    setTimeout(() => { if (rb.isConnected) { delete rb.dataset.armed; rb.textContent = 'Statistik zurücksetzen'; rb.classList.remove('primary'); } }, 4000);
+  };
+}
+
+/* ---------- router ---------- */
+let cleanup = null;
+function route() {
+  if (cleanup) { cleanup(); cleanup = null; }
+  const r = location.hash.slice(1);
+  document.querySelectorAll('#tabs a').forEach(a => { if (a.getAttribute('href') === '#' + r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  window.scrollTo(0, 0);
+  if (OFFICE) { document.getElementById('ofc-cover').hidden = true; document.getElementById('ofc-main').scrollTop = 0; }
+  if (GAMES[r] && connected() && duel.game !== r) { newRound(r); return; }
+  if (inDuel(r)) duel.t0 = Date.now();
+  renderDuelBar();
+  if (r === 'statistik') statsPage();
+  else if (r === 'flaggen') quiz({
+    key: 'flaggen', title: 'Flaggen', stageClass: 'stage-flag plain', pool: countries,
+    intro: 'Zu welchem Land gehört diese Flagge?',
+    show(stage, c) { stage.innerHTML = `<img src="${c.flagUrl}" alt="Flagge eines Landes">`; }
+  });
+  else if (r === 'karte') mapQuiz();
+  else if (r === 'umriss') quiz({
+    key: 'umriss', title: 'Umrisse', stageClass: 'stage-outline plain', pool: mapCountries,
+    intro: 'Welches Land hat diese Form? Weit entfernte Inseln und Überseegebiete sind weggelassen.',
+    show(stage, c) { stage.innerHTML = outlineSvg(c.code, 420); },
+    reveal(stage, c, g, ok) { stage.querySelector('path').setAttribute('class', 'silhouette ' + (ok ? 'ok' : 'bad')); }
+  });
+  else if (r === 'grid') geoGrid();
+  else if (r === 'rankle') rankle();
+  else if (r === 'usa') cleanup = usa();
+  else home();
+  decorateOffice();
+}
+window.addEventListener('hashchange', route);
+if (OFFICE) new MutationObserver(decorateOffice).observe(app, { childList: true });
+route();
+try { const c = new URLSearchParams(location.search).get('duell'); if (c) modal('menu', c.toUpperCase().slice(0, 5)); } catch {}
+})();
+</script>
