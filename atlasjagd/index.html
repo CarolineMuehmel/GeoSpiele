@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta charset="utf-8">
 <title>Atlasjagd</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -175,9 +176,10 @@ select.sel { background: var(--panel); border: 1px solid var(--line); border-rad
 .gg .corner span { font: 600 10px/1.2 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .cell { aspect-ratio: 1; max-width: 100%; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); position: relative; overflow: hidden; display: grid; place-items: center; padding: 0; }
 .cell:hover:not(:disabled) { border-color: var(--teal); }
-.cell.filled { border-color: transparent; background-size: cover; background-position: center; cursor: default; }
-.cell .lbl { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 5px; font-size: 12px; font-weight: 600; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.75)); text-align: center; line-height: 1.15; }
-.cell .pct { position: absolute; top: 5px; right: 5px; font: 600 10px/1 var(--f-mono); background: rgba(0,0,0,.6); color: #fff; padding: 3px 5px; border-radius: 4px; }
+.cell.filled { cursor: default; border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); background: color-mix(in srgb, var(--ok) 9%, var(--panel)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 18px 8px 8px; }
+.cell .cf { width: 56%; max-width: 72px; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.cell .lbl { font-size: 12px; font-weight: 600; color: var(--ink); text-align: center; line-height: 1.15; overflow-wrap: anywhere; }
+.cell .pct { position: absolute; top: 6px; right: 6px; font: 600 10px/1 var(--f-mono); color: var(--ok); }
 .cell .cnt { font: 600 11px/1 var(--f-mono); color: var(--muted); }
 .cell.sel { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent); }
 .gg-wrap { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; align-items: start; }
@@ -400,7 +402,7 @@ function autocomplete(root, items, onPick, { placeholder = 'Land eintippen …',
   input.addEventListener('blur', () => setTimeout(() => { list = []; render(); }, 120));
   return { input, focus: () => input.focus({ preventScroll: true }), clear: () => { input.value = ''; list = []; render(); } };
 }
-const countryItems = countries.map(c => ({ id: c.code, label: c.name, keys: c.keys, words: c.name.split(/[\s-]+/).map(norm), icon: c.flagUrl, c }));
+const countryItems = countries.map(c => ({ id: c.code, label: c.name, keys: c.keys, words: c.name.split(/[\s-]+/).map(norm), c }));
 
 /* ---------- map drawing ---------- */
 const MAP_W = 960, MAP_H = 500;
@@ -717,7 +719,7 @@ async function geoGrid() {
       html += hd(puzzle.rows[r]);
       for (let cI = 0; cI < 3; cI++) {
         const i = r * 3 + cI, f = filled[i];
-        if (f) html += `<button class="cell filled" data-i="${i}" style="background-image:url('${f.c.flagUrl}')" aria-label="${esc(f.c.name)}"><span class="pct">${f.pct}%</span><span class="lbl">${esc(f.c.name)}</span></button>`;
+        if (f) html += `<button class="cell filled" data-i="${i}" aria-label="${esc(f.c.name)}"><span class="pct">${f.pct}%</span><img class="cf" src="${f.c.flagUrl}" alt=""><span class="lbl">${esc(f.c.name)}</span></button>`;
         else html += `<button class="cell${active === i ? ' sel' : ''}" data-i="${i}" aria-label="Feld ${r + 1}/${cI + 1}">${over ? `<span class="cnt">${puzzle.answers[r][cI].length} Lösungen</span>` : ''}</button>`;
       }
     }
@@ -1020,3 +1022,5 @@ window.addEventListener('hashchange', route);
 route();
 })();
 </script>
+
+</body></html>
