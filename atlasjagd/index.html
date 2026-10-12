@@ -1,0 +1,1022 @@
+<meta charset="utf-8">
+<title>Atlasjagd</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a chart-room desk. Sticky header with mode tabs, one wide stage per game, controls docked under the stage. */
+:root {
+  --paper: #edf1ef;
+  --panel: #f8faf9;
+  --ink: #15242b;
+  --muted: #5b6b70;
+  --line: #c9d3d1;
+  --sea: #d3e2e7;
+  --land: #c4cbb2;
+  --land-edge: #f4f6ef;
+  --accent: #f2b200;        /* compass marigold */
+  --accent-ink: #1b1600;
+  --teal: #0e6b69;
+  --ok: #2c8a52;
+  --bad: #c4432c;
+  --guess: #e07a5f;
+  --shadow: 0 1px 0 rgba(21,36,43,.06), 0 8px 24px -12px rgba(21,36,43,.25);
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e181d; --panel: #15232a; --ink: #e5eeec; --muted: #93a6a8; --line: #2a3d44;
+    --sea: #10232c; --land: #34474b; --land-edge: #0e181d; --accent: #f6c33b; --accent-ink: #1b1600;
+    --teal: #4fb7ab; --ok: #49b878; --bad: #ec6a51; --guess: #f08a6c;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e181d; --panel: #15232a; --ink: #e5eeec; --muted: #93a6a8; --line: #2a3d44;
+  --sea: #10232c; --land: #34474b; --land-edge: #0e181d; --accent: #f6c33b; --accent-ink: #1b1600;
+  --teal: #4fb7ab; --ok: #49b878; --bad: #ec6a51; --guess: #f08a6c;
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--f-body); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+
+/* header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); font: 800 21px/1 var(--f-display); flex-shrink: 0; }
+.brand svg { width: 26px; height: 26px; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.tabs a { white-space: nowrap; text-decoration: none; color: var(--muted); padding: 7px 11px; border-radius: 8px; font-weight: 500; font-size: 14px; }
+.tabs a:hover { color: var(--ink); background: var(--panel); }
+.tabs a[aria-current="page"] { color: var(--ink); background: var(--panel); box-shadow: inset 0 -2px 0 var(--accent); }
+
+main { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; }
+.loading { padding-block: 80px; text-align: center; color: var(--muted); font-family: var(--f-mono); font-size: 13px; }
+
+/* home */
+.hero { display: grid; gap: 10px; margin-bottom: 28px; max-width: 46rem; }
+.hero h1 { font-size: clamp(38px, 7vw, 68px); line-height: .95; font-weight: 800; }
+.hero h1 em { font-style: normal; color: var(--teal); }
+.hero p { margin: 0; color: var(--muted); font-size: 17px; max-width: 36rem; }
+.coords { font: 400 12px/1 var(--f-mono); color: var(--muted); letter-spacing: .04em; }
+.modes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.mode { display: grid; grid-template-rows: 170px auto; text-decoration: none; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+.mode:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.mode .thumb { background: var(--sea); display: grid; place-items: center; overflow: hidden; position: relative; }
+.mode .thumb svg { width: 100%; height: 100%; display: block; }
+.mode .body { padding: 14px 16px 16px; display: grid; gap: 4px; }
+.mode .body .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.mode h2 { font-size: 22px; font-weight: 700; }
+.mode p { margin: 0; color: var(--muted); font-size: 14px; }
+.tag { font: 600 11px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--teal); white-space: nowrap; }
+.flagstack { position: relative; width: 210px; height: 120px; }
+.flagstack img { position: absolute; width: 120px; border-radius: 4px; box-shadow: var(--shadow); }
+.flagstack img:nth-child(1) { left: 0; top: 18px; transform: rotate(-8deg); }
+.flagstack img:nth-child(2) { left: 45px; top: 4px; transform: rotate(2deg); }
+.flagstack img:nth-child(3) { left: 90px; top: 24px; transform: rotate(9deg); }
+.minigrid { display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; }
+.minigrid span { width: 40px; height: 40px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); background-size: cover; background-position: center; }
+.minirank { display: grid; gap: 6px; width: 220px; }
+.minirank div { display: flex; justify-content: space-between; font: 600 12px/1 var(--f-mono); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+.minirank b { color: var(--teal); }
+
+/* game shell */
+.game-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 16px; }
+.game-head h1 { font-size: clamp(28px, 4.5vw, 40px); font-weight: 800; line-height: 1; }
+.game-head p { margin: 6px 0 0; color: var(--muted); max-width: 40rem; }
+.stats { display: flex; gap: 18px; font-variant-numeric: tabular-nums; }
+.stat { display: grid; gap: 2px; text-align: right; }
+.stat span { font: 600 10px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.stat b { font: 700 22px/1 var(--f-display); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: none; padding: 6px 11px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+select.sel { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; font-size: 13px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 8px 14px; font-weight: 600; font-size: 14px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.ghost { background: none; }
+.spacer { flex: 1; }
+
+.stage { position: relative; background: var(--sea); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage.plain { background: var(--panel); }
+.stage-flag { min-height: 300px; display: grid; place-items: center; padding: 28px; }
+.stage-flag img { width: min(420px, 100%); border-radius: 6px; box-shadow: var(--shadow); }
+.stage-map svg { display: block; width: 100%; height: min(58vh, 540px); touch-action: none; }
+.stage-outline { display: grid; place-items: center; padding: 16px; }
+.stage-outline svg { width: min(520px, 100%); height: min(48vh, 440px); display: block; }
+.land { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.land.target { fill: var(--accent); }
+.land.is-ok { fill: var(--ok); }
+.land.is-bad { fill: var(--bad); }
+.land.is-guess { fill: var(--guess); opacity: .85; }
+.ring { fill: none; stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.silhouette { fill: var(--ink); }
+.silhouette.ok { fill: var(--ok); }
+.silhouette.bad { fill: var(--bad); }
+.zoombar { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.zoombar button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; }
+.maphint { position: absolute; left: 12px; bottom: 10px; font: 400 11px/1 var(--f-mono); color: var(--muted); }
+
+/* answer dock */
+.dock { margin-top: 14px; display: grid; gap: 10px; }
+.ac { position: relative; }
+.ac input { width: 100%; padding: 14px 16px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); font-size: 17px; }
+.ac input:focus { border-color: var(--teal); outline: none; }
+.ac ul { position: absolute; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow); z-index: 30; max-height: 290px; overflow-y: auto; }
+.ac.up ul { top: auto; bottom: calc(100% + 4px); }
+.ac li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; cursor: pointer; }
+.ac li img { width: 26px; border-radius: 2px; }
+.ac li small { color: var(--muted); margin-left: auto; font-size: 12px; }
+.ac li[aria-selected="true"] { background: var(--sea); }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%,60% { transform: translateX(-6px) } 40%,80% { transform: translateX(6px) } }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.choices button { text-align: left; padding: 14px 16px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); font-weight: 600; font-size: 16px; }
+.choices button:hover:not(:disabled) { border-color: var(--teal); }
+.choices button.ok { background: var(--ok); color: #fff; border-color: transparent; }
+.choices button.bad { background: var(--bad); color: #fff; border-color: transparent; }
+.choices button:disabled { cursor: default; }
+.answer-row { display: flex; gap: 10px; }
+.answer-row .ac { flex: 1; min-width: 0; }
+
+.feedback { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 16px; border-radius: 11px; background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--ok); }
+.feedback.bad { border-left-color: var(--bad); }
+.feedback img { width: 54px; border-radius: 3px; }
+.feedback .txt { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.feedback .txt b { font: 700 19px/1.2 var(--f-display); }
+.feedback .txt span { color: var(--muted); font-size: 13px; }
+.facts { font: 400 12px/1.4 var(--f-mono); color: var(--muted); }
+
+.result { padding: 32px 24px; display: grid; gap: 16px; justify-items: center; text-align: center; }
+.result .big { font: 800 64px/1 var(--f-display); }
+.result .big small { font-size: 28px; color: var(--muted); }
+.mistakes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 560px; }
+.mistakes span { display: inline-flex; gap: 6px; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 4px 9px 4px 4px; border-radius: 999px; font-size: 13px; }
+.mistakes img { width: 22px; border-radius: 2px; }
+
+/* grid game */
+.gg { display: grid; grid-template-columns: minmax(70px, .8fr) repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 560px; }
+.gg .hd { display: grid; place-items: center; text-align: center; font: 600 13px/1.25 var(--f-body); padding: 6px; min-height: 64px; }
+.gg .hd small { display: block; font: 400 10px/1.2 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.gg .corner { display: grid; place-items: center; text-align: center; }
+.gg .corner b { font: 800 34px/1 var(--f-display); }
+.gg .corner span { font: 600 10px/1.2 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.cell { aspect-ratio: 1; max-width: 100%; border-radius: 11px; border: 1.5px solid var(--line); background: var(--panel); position: relative; overflow: hidden; display: grid; place-items: center; padding: 0; }
+.cell:hover:not(:disabled) { border-color: var(--teal); }
+.cell.filled { border-color: transparent; background-size: cover; background-position: center; cursor: default; }
+.cell .lbl { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 6px 5px; font-size: 12px; font-weight: 600; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.75)); text-align: center; line-height: 1.15; }
+.cell .pct { position: absolute; top: 5px; right: 5px; font: 600 10px/1 var(--f-mono); background: rgba(0,0,0,.6); color: #fff; padding: 3px 5px; border-radius: 4px; }
+.cell .cnt { font: 600 11px/1 var(--f-mono); color: var(--muted); }
+.cell.sel { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent); }
+.gg-wrap { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.side { display: grid; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.card h3 { font-size: 17px; margin-bottom: 6px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.msg { min-height: 1.5em; font-size: 14px; color: var(--muted); }
+.msg.bad { color: var(--bad); } .msg.ok { color: var(--ok); }
+.anslist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-height: 260px; overflow-y: auto; }
+.anslist span { font-size: 12px; background: var(--sea); border-radius: 6px; padding: 3px 7px; }
+
+/* rankle */
+.rk { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.rk-country { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 12px; justify-items: center; text-align: center; }
+.rk-country img { width: 100%; max-width: 220px; border-radius: 5px; box-shadow: var(--shadow); }
+.rk-country b { font: 800 26px/1.1 var(--f-display); }
+.rk-country .facts { text-align: center; }
+.rk-list { display: grid; gap: 7px; }
+.rk-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 11px; background: var(--panel); border: 1.5px solid var(--line); text-align: left; min-height: 54px; }
+button.rk-row:hover { border-color: var(--teal); }
+.rk-row .cat { font-weight: 600; }
+.rk-row .cat small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+.rk-row .who { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.rk-row .who img { width: 26px; border-radius: 2px; }
+.rk-row .rank { font: 700 18px/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 3.2ch; text-align: right; }
+.rk-row.done { background: var(--sea); border-color: transparent; }
+.rk-row.flash { animation: flash .7s; }
+@keyframes flash { from { box-shadow: 0 0 0 4px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+.rk-total { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 4px; font-family: var(--f-display); }
+.rk-total b { font-size: 26px; }
+table.opt { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.opt td { padding: 5px 6px; border-top: 1px solid var(--line); }
+table.opt td:last-child { text-align: right; font-family: var(--f-mono); }
+
+/* usa */
+.us-stage svg { display: block; width: 100%; height: min(60vh, 600px); }
+.st { fill: var(--land); stroke: var(--land-edge); stroke-width: 1; }
+.st.dc { pointer-events: none; }
+.clickable .st:not(.dc):hover { fill: color-mix(in srgb, var(--land) 70%, var(--teal)); cursor: pointer; }
+.st.target { fill: var(--accent); }
+.st.found { fill: var(--ok); }
+.st.missed { fill: var(--bad); }
+.st.guess { fill: var(--guess); }
+.us-prompt { font: 700 26px/1.1 var(--f-display); }
+.found-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.found-list span { font-size: 12px; padding: 3px 7px; border-radius: 6px; background: var(--sea); }
+.found-list span.miss { background: color-mix(in srgb, var(--bad) 22%, transparent); }
+.us-label { font: 600 9px var(--f-body); fill: #fff; pointer-events: none; text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; }
+
+@media (max-width: 860px) {
+  .gg-wrap, .rk { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .choices { grid-template-columns: minmax(0, 1fr); }
+  .stats { gap: 12px; }
+  .stat b { font-size: 18px; }
+  .gg { gap: 5px; grid-template-columns: minmax(56px, .7fr) repeat(3, minmax(0, 1fr)); }
+  .gg .hd { font-size: 11px; padding: 2px; }
+  .cell .lbl { font-size: 10px; }
+  .brand span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16 4 L19.5 16 L16 28 L12.5 16 Z" fill="var(--accent)"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg>
+      <span>Atlasjagd</span>
+    </a>
+    <nav class="tabs" id="tabs">
+      <a href="#flaggen">Flaggen</a>
+      <a href="#karte">Weltkarte</a>
+      <a href="#umriss">Umrisse</a>
+      <a href="#grid">Geo-Grid</a>
+      <a href="#rankle">Rankle</a>
+      <a href="#usa">USA</a>
+    </nav>
+  </div>
+</header>
+<main id="app"><div class="loading">Karten werden geladen …</div></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+(async function () {
+'use strict';
+const app = document.getElementById('app');
+
+/* ---------- helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss').replace(/[^a-z0-9]/g, '');
+const umlautAlt = s => String(s).replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue');
+const shuffle = (a, rnd = Math.random) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a, rnd = Math.random) => a[Math.floor(rnd() * a.length)];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('atlasjagd:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('atlasjagd:' + k, JSON.stringify(v)); } catch {} }
+};
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const fmtNum = n => n == null ? '–' : n >= 1e9 ? (n / 1e9).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' Mrd.' : n >= 1e6 ? (n / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' Mio.' : Math.round(n).toLocaleString('de-DE');
+const CONT = { EU: 'Europa', AS: 'Asien', AF: 'Afrika', NA: 'Nordamerika', SA: 'Südamerika', OC: 'Ozeanien' };
+
+/* ---------- data ---------- */
+let countries, world, us;
+try {
+  [countries, world, us] = await Promise.all(['data/countries.json', 'data/world.json', 'data/us.json'].map(u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); })));
+} catch (e) {
+  app.innerHTML = '<div class="loading">Die Kartendaten konnten nicht geladen werden. Lade die Seite neu.</div>';
+  return;
+}
+const NAME_FIX = { CD: 'Demokratische Republik Kongo', CG: 'Republik Kongo', CZ: 'Tschechien', VA: 'Vatikanstadt' };
+const EXTRA = {
+  GB: ['Großbritannien', 'England', 'UK'], US: ['USA', 'Amerika', 'Vereinigte Staaten von Amerika'], NL: ['Holland'],
+  CD: ['DR Kongo', 'Kongo Kinshasa', 'Zaire'], CG: ['Kongo', 'Kongo Brazzaville'], KR: ['Korea'], MM: ['Birma', 'Burma'],
+  CI: ['Elfenbeinküste', 'Cote dIvoire'], CV: ['Kap Verde'], SZ: ['Swasiland', 'Eswatini'], MK: ['Mazedonien'], TL: ['Osttimor'],
+  AE: ['VAE', 'Emirate'], CF: ['ZAR'], VA: ['Vatikan'], BA: ['Bosnien'], TW: ['Republik China'], PS: ['Palästina'], FM: ['Mikronesien']
+};
+const dnDe = new Intl.DisplayNames(['de'], { type: 'region' });
+const byCode = {};
+for (const c of countries) {
+  c.name = NAME_FIX[c.code] || c.de;
+  const svg = c.flag.includes(' width=') ? c.flag : c.flag.replace('<svg ', '<svg width="640" height="480" ');
+  c.flagUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  let dn = null; try { dn = dnDe.of(c.code); } catch {}
+  const names = [c.name, c.de, c.en, dn, ...c.aliases, ...(EXTRA[c.code] || [])].filter(Boolean);
+  c.keys = [...new Set(names.flatMap(n => [norm(n), norm(umlautAlt(n))]))].filter(k => k.length > 1);
+  byCode[c.code] = c;
+}
+const NUM2CODE = {}; countries.forEach(c => { if (c.num) NUM2CODE[c.num] = c.code; });
+const NAME2CODE = { 'Kosovo': 'XK', 'N. Cyprus': 'CY', 'Somaliland': 'SO' };
+const worldFeatures = topojson.feature(world, world.objects.countries).features;
+worldFeatures.forEach(f => { f.code = NUM2CODE[f.id] || NAME2CODE[f.properties.name] || null; });
+const featuresOf = code => worldFeatures.filter(f => f.code === code);
+const mapCountries = countries.filter(c => featuresOf(c.code).length);
+
+// polygons close to the main landmass (drops far-flung territories for zoom and outlines)
+const mainCache = {};
+function mainGeom(code) {
+  if (mainCache[code]) return mainCache[code];
+  const polys = [];
+  for (const f of featuresOf(code)) {
+    const g = f.geometry; if (!g) continue;
+    if (g.type === 'Polygon') polys.push(g.coordinates); else if (g.type === 'MultiPolygon') polys.push(...g.coordinates);
+  }
+  const items = polys.map(p => { const geo = { type: 'Polygon', coordinates: p }; return { geo, area: d3.geoArea(geo), c: d3.geoCentroid(geo) }; });
+  const main = items.reduce((a, b) => b.area > a.area ? b : a);
+  const kept = items.filter(i => i === main || (d3.geoDistance(i.c, main.c) < 0.45));
+  return (mainCache[code] = { geo: { type: 'MultiPolygon', coordinates: kept.map(i => i.geo.coordinates) }, main, kept });
+}
+
+/* flag colours: rasterise each flag once and bucket pixels by hue */
+let flagColorsReady = null;
+function computeFlagColors() {
+  if (flagColorsReady) return flagColorsReady;
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 48;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  flagColorsReady = Promise.all(countries.map(c => new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, 64, 48); ctx.drawImage(img, 0, 0, 64, 48);
+      const d = ctx.getImageData(0, 0, 64, 48).data; const cnt = {};
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, s = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
+        let h = 0; if (mx !== mn) { h = mx === r ? ((g - b) / (mx - mn)) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4; h *= 60; if (h < 0) h += 360; }
+        let k;
+        if (l > 0.86 && s < 0.5) k = 'white'; else if (l < 0.13) k = 'black'; else if (s < 0.2) k = l > 0.6 ? 'white' : 'grey';
+        else if (h < 16 || h >= 335) k = 'red'; else if (h < 40) k = 'orange'; else if (h < 70) k = 'yellow'; else if (h < 170) k = 'green'; else if (h < 260) k = 'blue'; else k = 'purple';
+        cnt[k] = (cnt[k] || 0) + 1;
+      }
+      const tot = 64 * 48; c.colors = new Set(Object.keys(cnt).filter(k => cnt[k] / tot >= 0.03)); res();
+    };
+    img.onerror = () => { c.colors = new Set(); res(); };
+    img.src = c.flagUrl;
+  })));
+  return flagColorsReady;
+}
+
+/* ---------- autocomplete ---------- */
+function autocomplete(root, items, onPick, { placeholder = 'Land eintippen …', up = false, exclude = () => false } = {}) {
+  root.innerHTML = `<div class="ac${up ? ' up' : ''}"><input id="ac-${Math.random().toString(36).slice(2, 7)}" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}"><ul role="listbox" hidden></ul></div>`;
+  const input = root.querySelector('input'), ul = root.querySelector('ul'), wrap = root.querySelector('.ac');
+  let list = [], sel = 0;
+  function search(q) {
+    const n = norm(q); if (!n) return [];
+    const scored = [];
+    for (const it of items) {
+      if (exclude(it)) continue;
+      let best = 9;
+      if (norm(it.label) === n) best = 0;
+      else if (norm(it.label).startsWith(n)) best = 1;
+      else if (it.keys.some(k => k === n)) best = 2;
+      else if (it.keys.some(k => k.startsWith(n))) best = 3;
+      else if (n.length >= 3 && it.words.some(w => w.startsWith(n))) best = 4;
+      else if (n.length >= 4 && it.keys.some(k => k.includes(n))) best = 5;
+      if (best < 9) scored.push([best, it]);
+    }
+    return scored.sort((a, b) => a[0] - b[0] || a[1].label.localeCompare(b[1].label, 'de')).slice(0, 8).map(x => x[1]);
+  }
+  function render() {
+    ul.hidden = !list.length;
+    if (list.length && !up) wrap.classList.toggle('up', input.getBoundingClientRect().bottom > innerHeight * 0.62);
+    ul.innerHTML = list.map((it, i) => `<li role="option" data-i="${i}" aria-selected="${i === sel}">${it.icon ? `<img src="${it.icon}" alt="">` : ''}<span>${esc(it.label)}</span>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</li>`).join('');
+  }
+  function choose(it) { list = []; render(); input.value = ''; onPick(it); }
+  input.addEventListener('input', () => { list = search(input.value); sel = 0; render(); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { sel = Math.min(sel + 1, list.length - 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sel = Math.max(sel - 1, 0); render(); e.preventDefault(); }
+    else if (e.key === 'Escape') { list = []; render(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault(); e.stopPropagation();
+      if (list[sel]) choose(list[sel]);
+      else if (input.value.trim()) { wrap.classList.remove('shake'); void wrap.offsetWidth; wrap.classList.add('shake'); }
+    }
+  });
+  ul.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (li) { e.preventDefault(); choose(list[+li.dataset.i]); } });
+  input.addEventListener('blur', () => setTimeout(() => { list = []; render(); }, 120));
+  return { input, focus: () => input.focus({ preventScroll: true }), clear: () => { input.value = ''; list = []; render(); } };
+}
+const countryItems = countries.map(c => ({ id: c.code, label: c.name, keys: c.keys, words: c.name.split(/[\s-]+/).map(norm), icon: c.flagUrl, c }));
+
+/* ---------- map drawing ---------- */
+const MAP_W = 960, MAP_H = 500;
+const worldProj = d3.geoNaturalEarth1().fitExtent([[6, 6], [MAP_W - 6, MAP_H - 6]], { type: 'Sphere' });
+const worldPath = d3.geoPath(worldProj);
+const worldD = new Map(worldFeatures.map(f => [f, worldPath(f)]));
+
+function worldSvg({ highlight = null, cls = '', w = MAP_W, h = MAP_H } = {}) {
+  return `<svg viewBox="0 0 ${w} ${h}" class="${cls}" role="img" aria-label="Weltkarte"><g class="zoomg">${worldFeatures.map(f => `<path class="land${f.code && f.code === highlight ? ' target' : ''}" data-code="${f.code || ''}" d="${worldD.get(f)}"/>`).join('')}</g></svg>`;
+}
+
+function outlineSvg(code, size = 400, cls = 'silhouette') {
+  const { geo, main } = mainGeom(code);
+  const proj = d3.geoAzimuthalEqualArea().rotate([-main.c[0], -main.c[1]]).fitExtent([[14, 14], [size - 14, size - 14]], geo);
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Umriss eines Landes"><path class="${cls}" d="${d3.geoPath(proj)(geo)}"/></svg>`;
+}
+
+/* ---------- quiz engine (Flaggen, Weltkarte, Umrisse) ---------- */
+function quiz(cfg) {
+  const key = cfg.key;
+  const st = Object.assign({ cont: 'ALL', len: 10, answer: 'type' }, store.get(key + ':settings', {}));
+  let queue, idx, score, streak, wrong, phase, current, choicesEl, ac;
+  const best = () => store.get(key + ':best', 0);
+
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>${cfg.title}</h1><p>${cfg.intro}</p></div>
+      <div class="stats">
+        <div class="stat"><span>Runde</span><b id="q-prog">–</b></div>
+        <div class="stat"><span>Punkte</span><b id="q-score">0</b></div>
+        <div class="stat"><span>Serie</span><b id="q-streak">0</b></div>
+        <div class="stat"><span>Rekord</span><b id="q-best">${best()}</b></div>
+      </div>
+    </div>
+    <div class="controls">
+      <select class="sel" id="q-cont" aria-label="Kontinent">
+        <option value="ALL">Alle Kontinente</option>${Object.entries(CONT).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+      </select>
+      <select class="sel" id="q-len" aria-label="Rundenzahl">
+        <option value="10">10 Fragen</option><option value="20">20 Fragen</option><option value="0">Alle Länder</option>
+      </select>
+      <div class="seg" role="group" aria-label="Antwortmodus">
+        <button data-a="type">Eintippen</button><button data-a="mc">4 Antworten</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="q-restart">Neu starten</button>
+    </div>
+    <div class="stage ${cfg.stageClass}" id="q-stage"></div>
+    <div class="dock" id="q-dock"></div>`;
+  const $s = id => document.getElementById(id);
+  $s('q-cont').value = st.cont; $s('q-len').value = String(st.len);
+  const segBtns = app.querySelectorAll('.seg button');
+  const syncSeg = () => segBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.a === st.answer)));
+  syncSeg();
+  const save = () => store.set(key + ':settings', st);
+  $s('q-cont').onchange = e => { st.cont = e.target.value; save(); start(); };
+  $s('q-len').onchange = e => { st.len = +e.target.value; save(); start(); };
+  segBtns.forEach(b => b.onclick = () => { st.answer = b.dataset.a; save(); syncSeg(); if (phase === 'ask') renderDock(); });
+  $s('q-restart').onclick = start;
+  if (cfg.setup) cfg.setup($s('q-stage'));
+
+  function pool() { return cfg.pool.filter(c => st.cont === 'ALL' || c.cont === st.cont); }
+  function start() {
+    const p = shuffle(pool());
+    queue = st.len ? p.slice(0, st.len) : p; idx = 0; score = 0; streak = 0; wrong = [];
+    ask();
+  }
+  function updateStats() {
+    $s('q-prog').textContent = `${Math.min(idx + 1, queue.length)}/${queue.length}`;
+    $s('q-score').textContent = score; $s('q-streak').textContent = streak; $s('q-best').textContent = best();
+  }
+  function ask() {
+    phase = 'ask'; current = queue[idx]; updateStats();
+    cfg.show($s('q-stage'), current);
+    renderDock();
+  }
+  function renderDock() {
+    const dock = $s('q-dock');
+    if (st.answer === 'mc') {
+      const p = pool();
+      let others = shuffle(p.filter(c => c !== current && c.cont === current.cont)).slice(0, 3);
+      if (others.length < 3) others = others.concat(shuffle(countries.filter(c => c !== current && !others.includes(c))).slice(0, 3 - others.length));
+      const opts = shuffle([current, ...others]);
+      dock.innerHTML = `<div class="choices">${opts.map(o => `<button data-c="${o.code}">${esc(o.name)}</button>`).join('')}</div>
+        <div class="answer-row"><span class="spacer"></span><button class="btn ghost" id="q-skip">Weiß ich nicht</button></div>`;
+      choicesEl = dock.querySelector('.choices');
+      choicesEl.querySelectorAll('button').forEach(b => b.onclick = () => answer(byCode[b.dataset.c]));
+    } else {
+      dock.innerHTML = `<div class="answer-row"><div id="q-ac" style="flex:1;min-width:0"></div><button class="btn ghost" id="q-skip">Weiß ich nicht</button></div>`;
+      ac = autocomplete(document.getElementById('q-ac'), countryItems, it => answer(it.c), { placeholder: 'Welches Land ist das?' });
+      ac.focus();
+    }
+    document.getElementById('q-skip').onclick = () => answer(null);
+  }
+  function answer(guess) {
+    if (phase !== 'ask') return;
+    phase = 'feedback';
+    const ok = guess === current;
+    if (ok) { score++; streak++; if (streak > best()) store.set(key + ':best', streak); }
+    else { streak = 0; wrong.push(current); }
+    updateStats();
+    cfg.reveal && cfg.reveal($s('q-stage'), current, guess, ok);
+    const dock = $s('q-dock');
+    if (st.answer === 'mc' && choicesEl) {
+      choicesEl.querySelectorAll('button').forEach(b => { b.disabled = true; if (b.dataset.c === current.code) b.classList.add('ok'); else if (guess && b.dataset.c === guess.code) b.classList.add('bad'); });
+    }
+    const last = idx >= queue.length - 1;
+    const fb = document.createElement('div');
+    fb.className = 'feedback' + (ok ? '' : ' bad');
+    fb.innerHTML = `<img src="${current.flagUrl}" alt="">
+      <div class="txt"><b>${ok ? 'Richtig! ' : ''}${esc(current.name)}</b>
+      <span>${ok ? '' : (guess ? `Deine Antwort: ${esc(guess.name)} · ` : 'Übersprungen · ')}${CONT[current.cont]}${current.capital ? ' · Hauptstadt ' + esc(current.capital) : ''}${current.pop ? ' · ' + fmtNum(current.pop) + ' Einwohner' : ''}</span></div>
+      <button class="btn primary" id="q-next">${last ? 'Ergebnis ansehen' : 'Weiter'} →</button>`;
+    if (st.answer === 'mc') { dock.querySelector('.answer-row')?.remove(); dock.appendChild(fb); } else { dock.innerHTML = ''; dock.appendChild(fb); }
+    const next = document.getElementById('q-next');
+    next.onclick = () => { if (last) finish(); else { idx++; ask(); } };
+    next.focus({ preventScroll: true });
+  }
+  function finish() {
+    phase = 'done'; idx = queue.length;
+    const pct = Math.round(score / queue.length * 100);
+    $s('q-stage').innerHTML = `<div class="result">
+      <div class="coords">${pct >= 90 ? 'Kartograf·in' : pct >= 60 ? 'Weltreisende·r' : 'Entdecker·in'}</div>
+      <div class="big">${score}<small> / ${queue.length}</small></div>
+      ${wrong.length ? `<div>Diese hast du verpasst:</div><div class="mistakes">${wrong.map(c => `<span><img src="${c.flagUrl}" alt="">${esc(c.name)}</span>`).join('')}</div>` : '<div>Alles richtig. Stark!</div>'}
+      <button class="btn primary" id="q-again">Nochmal spielen</button></div>`;
+    $s('q-dock').innerHTML = '';
+    document.getElementById('q-again').onclick = start;
+    document.getElementById('q-again').focus({ preventScroll: true });
+  }
+  start();
+}
+
+/* Weltkarte: zoomable map with highlighted country */
+function mapQuiz() {
+  let svg, g, zoom, ringR = 0;
+  quiz({
+    key: 'karte', title: 'Weltkarte', stageClass: 'stage-map',
+    intro: 'Ein Land ist gelb markiert. Welches ist es? Ziehen und scrollen zum Erkunden.',
+    pool: mapCountries,
+    setup(stage) {
+      stage.innerHTML = worldSvg() + `<div class="zoombar"><button aria-label="Hineinzoomen" data-z="1.6">+</button><button aria-label="Herauszoomen" data-z="0.625">−</button><button aria-label="Ganze Welt" data-z="0">⌂</button></div><div class="maphint">Mausrad / Pinch zum Zoomen</div>`;
+      svg = d3.select(stage).select('svg'); g = svg.select('.zoomg');
+      g.append('circle').attr('class', 'ring').attr('r', 0);
+      zoom = d3.zoom().scaleExtent([1, 120]).translateExtent([[-200, -100], [MAP_W + 200, MAP_H + 100]])
+        .on('zoom', e => { g.attr('transform', e.transform); g.select('.ring').attr('r', ringR / e.transform.k); });
+      svg.call(zoom);
+      stage.querySelectorAll('.zoombar button').forEach(b => b.onclick = () => {
+        const z = +b.dataset.z; if (!z) svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); else svg.transition().duration(300).call(zoom.scaleBy, z);
+      });
+    },
+    show(stage, c) {
+      g.selectAll('path.land').attr('class', function () { return 'land' + (this.dataset.code === c.code ? ' target' : ''); });
+      // zoom to main landmass, ignoring pieces that wrap around the map edge
+      const { kept, main } = mainGeom(c.code);
+      const mc = worldProj(main.c);
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const k of kept) {
+        const b = worldPath.bounds(k.geo); const pc = worldProj(k.c);
+        if (!pc || Math.abs(pc[0] - mc[0]) > 200) continue;
+        x0 = Math.min(x0, b[0][0]); y0 = Math.min(y0, b[0][1]); x1 = Math.max(x1, b[1][0]); y1 = Math.max(y1, b[1][1]);
+      }
+      const dx = Math.max(x1 - x0, 1), dy = Math.max(y1 - y0, 1), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      const k = Math.max(1, Math.min(10, 0.2 / Math.max(dx / MAP_W, dy / MAP_H)));
+      const small = Math.max(dx, dy) * k < 14;
+      ringR = small ? 16 : 0;
+      g.select('.ring').attr('cx', cx).attr('cy', cy).attr('r', ringR / k).raise();
+      svg.transition().duration(800).call(zoom.transform, d3.zoomIdentity.translate(MAP_W / 2 - k * cx, MAP_H / 2 - k * cy).scale(k));
+    },
+    reveal(stage, c, guess, ok) {
+      g.selectAll(`path.land[data-code="${c.code}"]`).attr('class', 'land ' + (ok ? 'is-ok' : 'is-bad'));
+      if (guess && !ok) g.selectAll(`path.land[data-code="${guess.code}"]`).attr('class', 'land is-guess');
+    }
+  });
+}
+
+/* ---------- home ---------- */
+function home() {
+  const fl = shuffle(countries.filter(c => c.pop > 5e6)).slice(0, 3);
+  const gridFlags = shuffle(countries).slice(0, 4);
+  const usPath = d3.geoPath();
+  const usStates = topojson.feature(us, us.objects.states).features;
+  app.innerHTML = `
+    <section class="hero">
+      <div class="coords">52°31′N · 13°24′O &nbsp;/&nbsp; 197 Länder · 50 Bundesstaaten</div>
+      <h1>Die Welt im Kopf, <em>Land für Land.</em></h1>
+      <p>Sechs Spiele für dein Geografiewissen: Flaggen, Karten, Umrisse, Kombinationsrätsel und Ranglisten.</p>
+    </section>
+    <section class="modes">
+      <a class="mode" href="#flaggen"><div class="thumb"><div class="flagstack">${fl.map(c => `<img src="${c.flagUrl}" alt="">`).join('')}</div></div>
+        <div class="body"><div class="row"><h2>Flaggen</h2><span class="tag">197 Flaggen</span></div><p>Eine Flagge erscheint. Zu welchem Land gehört sie?</p></div></a>
+      <a class="mode" href="#karte"><div class="thumb">${worldSvg({ highlight: 'BR' })}</div>
+        <div class="body"><div class="row"><h2>Weltkarte</h2><span class="tag">Zoom & Suche</span></div><p>Ein Land leuchtet auf der Karte. Erkennst du es?</p></div></a>
+      <a class="mode" href="#umriss"><div class="thumb" style="padding:14px">${outlineSvg('IT', 300)}</div>
+        <div class="body"><div class="row"><h2>Umrisse</h2><span class="tag">Nur die Form</span></div><p>Kein Kontext, keine Nachbarn. Nur die Silhouette.</p></div></a>
+      <a class="mode" href="#grid"><div class="thumb"><div class="minigrid">${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => { const f = [0, 4, 5, 7].indexOf(i); return `<span style="${f >= 0 ? `background-image:url('${gridFlags[f].flagUrl}')` : ''}"></span>`; }).join('')}</div></div>
+        <div class="body"><div class="row"><h2>Geo-Grid</h2><span class="tag">Tägliches Rätsel</span></div><p>3×3 Felder, zwei Bedingungen pro Feld, neun Versuche.</p></div></a>
+      <a class="mode" href="#rankle"><div class="thumb"><div class="minirank"><div>Einwohner <b>#2</b></div><div>Fläche <b>#7</b></div><div>Lebenserwartung <b>#14</b></div></div></div>
+        <div class="body"><div class="row"><h2>Rankle</h2><span class="tag">8 Länder · 8 Kategorien</span></div><p>Ordne jedes Land der Kategorie zu, in der es am weitesten vorne liegt.</p></div></a>
+      <a class="mode" href="#usa"><div class="thumb"><svg viewBox="-60 -10 1040 640">${usStates.filter(s => s.properties.name !== 'District of Columbia').map(s => `<path class="st${s.properties.name === 'Texas' ? ' target' : ''}" d="${usPath(s)}"/>`).join('')}</svg></div>
+        <div class="body"><div class="row"><h2>USA-Staaten</h2><span class="tag">50 Staaten</span></div><p>Benennen, auf der Karte finden oder alle 50 aus dem Kopf.</p></div></a>
+    </section>`;
+}
+
+/* ---------- Geo-Grid ---------- */
+const EU = new Set('AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE'.split(' '));
+function gridCategories() {
+  const cats = [];
+  const add = (fam, group, label, test) => cats.push({ id: fam + ':' + label, fam, group, label, test });
+  for (const [k, v] of Object.entries(CONT)) add('cont', 'Kontinent', v, c => c.cont === k);
+  for (const n of ['DE', 'FR', 'CN', 'RU', 'BR', 'IN', 'TR', 'SA', 'AT', 'CD', 'TZ', 'SD', 'HU', 'RS', 'IR', 'ZM', 'ES', 'AR'])
+    add('border', 'Grenzt an', byCode[n].name, c => c.borders.includes(n));
+  add('nb', 'Nachbarn', 'Keine Landgrenze', c => c.borders.length === 0);
+  add('nb', 'Nachbarn', 'Genau 1–2 Nachbarländer', c => c.borders.length >= 1 && c.borders.length <= 2);
+  add('nb', 'Nachbarn', 'Mind. 5 Nachbarländer', c => c.borders.length >= 5);
+  add('geo', 'Lage', 'Binnenstaat', c => c.landlocked);
+  add('geo', 'Lage', 'Südhalbkugel', c => c.latlng[0] < 0);
+  add('geo2', 'Lage', 'Westlich von Greenwich', c => c.latlng[1] < 0);
+  add('pop', 'Einwohner', 'Über 50 Mio.', c => c.pop > 5e7);
+  add('pop', 'Einwohner', 'Unter 2 Mio.', c => c.pop != null && c.pop < 2e6);
+  add('pop', 'Einwohner', '10–50 Mio.', c => c.pop >= 1e7 && c.pop <= 5e7);
+  add('area', 'Fläche', 'Über 1 Mio. km²', c => c.area > 1e6);
+  add('area', 'Fläche', 'Unter 30.000 km²', c => c.area < 3e4);
+  add('gdp', 'Wirtschaft', 'BIP/Kopf über 30.000 $', c => c.gdppc > 3e4);
+  add('gdp', 'Wirtschaft', 'BIP/Kopf unter 2.000 $', c => c.gdppc != null && c.gdppc < 2000);
+  add('life', 'Gesundheit', 'Lebenserwartung über 80', c => c.life > 80);
+  add('lang', 'Amtssprache', 'Englisch', c => c.langs.includes('English'));
+  add('lang', 'Amtssprache', 'Französisch', c => c.langs.includes('French'));
+  add('lang', 'Amtssprache', 'Spanisch', c => c.langs.includes('Spanish'));
+  add('lang', 'Amtssprache', 'Arabisch', c => c.langs.includes('Arabic'));
+  add('lang', 'Amtssprache', 'Portugiesisch', c => c.langs.includes('Portuguese'));
+  add('org', 'Mitglied', 'EU-Mitglied', c => EU.has(c.code));
+  add('org', 'Währung', 'Euro', c => c.cur.includes('EUR'));
+  const COL = { red: 'Rot', blue: 'Blau', green: 'Grün', yellow: 'Gelb', black: 'Schwarz', white: 'Weiß' };
+  for (const [k, v] of Object.entries(COL)) add('flag', 'Flagge enthält', v, c => c.colors && c.colors.has(k));
+  add('flag', 'Flagge', 'Ohne Rot', c => c.colors && !c.colors.has('red'));
+  const letters = {}; countries.forEach(c => { const l = c.name[0].toUpperCase(); letters[l] = (letters[l] || 0) + 1; });
+  for (const l of Object.keys(letters).filter(l => letters[l] >= 9)) add('name', 'Name beginnt mit', l, c => c.name[0].toUpperCase() === l);
+  add('name', 'Name', 'Endet auf „-ien“', c => /ien$/.test(c.name));
+  add('name', 'Name', 'Endet auf „-a“', c => /a$/.test(c.name));
+  add('name', 'Name', 'Höchstens 5 Buchstaben', c => c.name.replace(/[^\p{L}]/gu, '').length <= 5);
+  add('name', 'Name', 'Mehrere Wörter', c => /[\s-]/.test(c.name.trim()));
+  return cats;
+}
+function makePuzzle(rnd) {
+  const cats = gridCategories();
+  const weight = c => c.fam === 'border' ? 0.7 : c.fam === 'flag' ? 1.2 : 1;
+  const draw = () => { const tot = cats.reduce((s, c) => s + weight(c), 0); let r = rnd() * tot; for (const c of cats) { r -= weight(c); if (r <= 0) return c; } return cats[0]; };
+  for (let t = 0; t < 4000; t++) {
+    const rows = [], cols = [];
+    let ok = true;
+    for (let i = 0; i < 6 && ok; i++) {
+      let c, tries = 0;
+      do { c = draw(); tries++; } while (tries < 50 && ([...rows, ...cols].includes(c) || (i < 3 ? cols : rows).some(x => x.fam === c.fam && x.fam !== 'flag') || (i < 3 ? rows : cols).filter(x => x.fam === c.fam).length >= 2));
+      (i < 3 ? rows : cols).push(c);
+    }
+    if (new Set([...rows, ...cols]).size < 6) continue;
+    const answers = rows.map(r => cols.map(c => countries.filter(x => r.test(x) && c.test(x))));
+    if (answers.flat().some(a => a.length < 3)) continue;
+    if (answers.flat().filter(a => a.length > 40).length > 3) continue;
+    return { rows, cols, answers };
+  }
+  return null;
+}
+async function geoGrid() {
+  app.innerHTML = '<div class="loading">Flaggenfarben werden analysiert …</div>';
+  await computeFlagColors();
+  if (location.hash !== '#grid') return;
+  const today = new Date(); const dayKey = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  let mode = 'daily', puzzle, filled, guesses, used, active, over;
+  // fame proxy for the estimated rarity score: bigger economies get picked more often
+  const fame = c => (c.gdp || 1e9) ** 0.5 + (c.pop || 1e5) ** 0.5 * 30;
+
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>Geo-Grid</h1><p>Finde für jedes Feld ein Land, das zur Zeile und zur Spalte passt. Jedes Land darf nur einmal vorkommen. Du hast neun Versuche.</p></div>
+      <div class="stats"><div class="stat"><span>Richtig</span><b id="g-right">0/9</b></div><div class="stat"><span>Seltenheit</span><b id="g-rare">–</b></div></div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Rätselart"><button data-m="daily">Rätsel des Tages</button><button data-m="random">Zufälliges Rätsel</button></div>
+      <span class="spacer"></span><button class="btn ghost" id="g-new">Neues Rätsel</button><button class="btn ghost" id="g-give">Aufgeben</button>
+    </div>
+    <div class="gg-wrap">
+      <div class="gg" id="g-grid"></div>
+      <div class="side">
+        <div class="card" id="g-panel"><h3>Feld auswählen</h3><p>Tippe auf ein leeres Feld und suche dann ein passendes Land.</p></div>
+        <div class="card"><h3>Seltenheit</h3><p>Jede richtige Antwort bekommt einen geschätzten Anteil: Wie viele Spieler hätten dasselbe Land gewählt? Bekannte, große Länder zählen viel, seltene wenig. Leere Felder zählen 100. Je niedriger die Summe, desto besser.</p></div>
+      </div>
+    </div>`;
+  const segs = app.querySelectorAll('.seg button');
+  segs.forEach(b => b.onclick = () => { mode = b.dataset.m; newPuzzle(); });
+  document.getElementById('g-new').onclick = () => { mode = 'random'; newPuzzle(); };
+  document.getElementById('g-give').onclick = () => { if (!over) end(); };
+
+  function newPuzzle() {
+    segs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
+    document.getElementById('g-new').hidden = mode === 'daily';
+    const rnd = mulberry(mode === 'daily' ? dayKey : Math.floor(Math.random() * 1e9));
+    puzzle = makePuzzle(rnd);
+    filled = Array(9).fill(null); guesses = 9; used = new Set(); active = null; over = false;
+    render();
+    panelIdle();
+  }
+  function rarity(i, c) {
+    const list = puzzle.answers[Math.floor(i / 3)][i % 3].slice().sort((a, b) => fame(b) - fame(a));
+    const w = list.map((_, j) => 1 / (j + 1) ** 1.1); const tot = w.reduce((a, b) => a + b, 0);
+    return Math.max(1, Math.round(w[list.indexOf(c)] / tot * 100));
+  }
+  function render() {
+    const el = document.getElementById('g-grid');
+    const hd = c => `<div class="hd"><div><small>${esc(c.group)}</small>${esc(c.label)}</div></div>`;
+    let html = `<div class="corner"><div><b>${guesses}</b><br><span>Versuche</span></div></div>` + puzzle.cols.map(hd).join('');
+    for (let r = 0; r < 3; r++) {
+      html += hd(puzzle.rows[r]);
+      for (let cI = 0; cI < 3; cI++) {
+        const i = r * 3 + cI, f = filled[i];
+        if (f) html += `<button class="cell filled" data-i="${i}" style="background-image:url('${f.c.flagUrl}')" aria-label="${esc(f.c.name)}"><span class="pct">${f.pct}%</span><span class="lbl">${esc(f.c.name)}</span></button>`;
+        else html += `<button class="cell${active === i ? ' sel' : ''}" data-i="${i}" aria-label="Feld ${r + 1}/${cI + 1}">${over ? `<span class="cnt">${puzzle.answers[r][cI].length} Lösungen</span>` : ''}</button>`;
+      }
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.cell').forEach(b => b.onclick = () => {
+      const i = +b.dataset.i;
+      if (over) { showAnswers(i); return; }
+      if (filled[i]) return;
+      active = i; render(); panelSearch();
+    });
+    const right = filled.filter(Boolean).length;
+    document.getElementById('g-right').textContent = `${right}/9`;
+    document.getElementById('g-rare').textContent = right ? filled.reduce((s, f) => s + (f ? f.pct : 100), 0) : '–';
+  }
+  function panelIdle(msg = '') {
+    document.getElementById('g-panel').innerHTML = `<h3>Feld auswählen</h3><p>Tippe auf ein leeres Feld und suche dann ein passendes Land.</p>${msg ? `<p class="msg ok" style="margin-top:8px">${msg}</p>` : ''}`;
+  }
+  function panelSearch() {
+    const r = puzzle.rows[Math.floor(active / 3)], c = puzzle.cols[active % 3];
+    const p = document.getElementById('g-panel');
+    p.innerHTML = `<h3>${esc(r.label)} × ${esc(c.label)}</h3><p>${esc(r.group)}: ${esc(r.label)} · ${esc(c.group)}: ${esc(c.label)}</p><div id="g-ac" style="margin-top:10px"></div><div class="msg" id="g-msg"></div>`;
+    const ac = autocomplete(document.getElementById('g-ac'), countryItems, it => guess(it.c), { placeholder: 'Land suchen …', exclude: it => used.has(it.id) });
+    ac.focus();
+  }
+  function guess(c) {
+    const i = active, msg = document.getElementById('g-msg');
+    if (used.has(c.code)) { msg.className = 'msg bad'; msg.textContent = `${c.name} ist schon im Grid.`; return; }
+    guesses--;
+    const r = puzzle.rows[Math.floor(i / 3)], col = puzzle.cols[i % 3];
+    if (r.test(c) && col.test(c)) {
+      filled[i] = { c, pct: rarity(i, c) }; used.add(c.code); active = null;
+      render();
+      if (guesses === 0 || filled.every(Boolean)) end(); else panelIdle(`${c.name} passt!`);
+    } else {
+      render();
+      const why = [!r.test(c) && `nicht „${r.label}“`, !col.test(c) && `nicht „${col.label}“`].filter(Boolean).join(' und ');
+      if (guesses === 0) { end(); return; }
+      msg.className = 'msg bad'; msg.textContent = `${c.name}: ${why}. Noch ${guesses} Versuche.`;
+    }
+  }
+  function end() {
+    over = true; active = null; render();
+    const right = filled.filter(Boolean).length, score = filled.reduce((s, f) => s + (f ? f.pct : 100), 0);
+    document.getElementById('g-panel').innerHTML = `<h3>${right === 9 ? 'Grid komplett!' : `${right} von 9 Feldern`}</h3><p>Seltenheits-Score: <b>${score}</b>. Tippe auf ein Feld, um alle möglichen Lösungen zu sehen.</p><div id="g-ans"></div>`;
+  }
+  function showAnswers(i) {
+    const list = puzzle.answers[Math.floor(i / 3)][i % 3];
+    const r = puzzle.rows[Math.floor(i / 3)], c = puzzle.cols[i % 3];
+    document.getElementById('g-ans').innerHTML = `<p style="margin-top:10px"><b>${esc(r.label)} × ${esc(c.label)}</b> (${list.length})</p><div class="anslist">${list.map(x => `<span>${esc(x.name)}</span>`).join('')}</div>`;
+  }
+  newPuzzle();
+}
+
+/* ---------- Rankle ---------- */
+const RANK_CATS = [
+  { k: 'pop', label: 'Einwohner', sub: 'meiste Menschen', fmt: fmtNum },
+  { k: 'area', label: 'Fläche', sub: 'größte Fläche', fmt: v => fmtNum(v) + ' km²' },
+  { k: 'gdp', label: 'Bruttoinlandsprodukt', sub: 'größte Wirtschaft', fmt: v => fmtNum(v) + ' $' },
+  { k: 'gdppc', label: 'BIP pro Kopf', sub: 'reichste Menschen', fmt: v => fmtNum(v) + ' $' },
+  { k: 'density', label: 'Bevölkerungsdichte', sub: 'am dichtesten besiedelt', fmt: v => fmtNum(v) + '/km²' },
+  { k: 'life', label: 'Lebenserwartung', sub: 'längstes Leben', fmt: v => v.toFixed(1) + ' J.' },
+  { k: 'forest', label: 'Waldanteil', sub: 'meister Wald in %', fmt: v => v.toFixed(0) + ' %' },
+  { k: 'birth', label: 'Geburtenrate', sub: 'Geburten je 1.000 Einw.', fmt: v => v.toFixed(1) + ' ‰' },
+  { k: 'urban', label: 'Stadtbevölkerung', sub: 'Anteil in Städten', fmt: v => v.toFixed(0) + ' %' },
+  { k: 'nb', label: 'Nachbarländer', sub: 'meiste Landgrenzen', fmt: v => v }
+];
+countries.forEach(c => { c.nb = c.borders.length; });
+const RANKS = {};
+for (const cat of RANK_CATS) {
+  const vals = countries.filter(c => c[cat.k] != null).map(c => c[cat.k]).sort((a, b) => b - a);
+  RANKS[cat.k] = new Map(countries.filter(c => c[cat.k] != null).map(c => [c.code, vals.indexOf(c[cat.k]) + 1]));
+}
+function rankle() {
+  const eligible = countries.filter(c => RANK_CATS.every(cat => c[cat.k] != null) && c.pop > 1e6);
+  let cats, picks, idx, assign;
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>Rankle</h1><p>Acht Länder kommen nacheinander. Ordne jedes einer Kategorie zu, in der es weltweit möglichst weit vorne liegt (Platz 1 von ${countries.length}). Jede Kategorie nur einmal. Niedrigste Summe gewinnt.</p></div>
+      <div class="stats"><div class="stat"><span>Land</span><b id="r-prog">1/8</b></div><div class="stat"><span>Summe</span><b id="r-sum">0</b></div><div class="stat"><span>Bestwert</span><b id="r-best">${store.get('rankle:best', '–')}</b></div></div>
+    </div>
+    <div class="controls"><span class="spacer"></span><button class="btn ghost" id="r-new">Neue Runde</button></div>
+    <div class="rk"><div id="r-left"></div><div class="rk-list" id="r-list"></div></div>`;
+  document.getElementById('r-new').onclick = start;
+  function start() {
+    cats = shuffle(RANK_CATS).slice(0, 8);
+    picks = shuffle(eligible).slice(0, 8); idx = 0; assign = {};
+    render();
+  }
+  const sum = () => Object.entries(assign).reduce((s, [k, c]) => s + RANKS[k].get(c.code), 0);
+  function render(flashK) {
+    const c = picks[idx];
+    document.getElementById('r-prog').textContent = `${Math.min(idx + 1, 8)}/8`;
+    document.getElementById('r-sum').textContent = sum();
+    document.getElementById('r-left').innerHTML = c ? `<div class="rk-country"><div class="coords">Land ${idx + 1} von 8</div><img src="${c.flagUrl}" alt=""><b>${esc(c.name)}</b><div class="facts">${CONT[c.cont]}${c.capital ? ' · ' + esc(c.capital) : ''}</div><p class="facts" style="margin:0">Wähle rechts eine Kategorie.</p></div>` : resultCard();
+    document.getElementById('r-list').innerHTML = cats.map(cat => {
+      const a = assign[cat.k];
+      if (a) return `<div class="rk-row done${flashK === cat.k ? ' flash' : ''}"><div class="cat">${esc(cat.label)}<small>${esc(cat.fmt(a[cat.k]))}</small></div><div class="who"><img src="${a.flagUrl}" alt="">${esc(a.name)}<span class="rank">#${RANKS[cat.k].get(a.code)}</span></div></div>`;
+      return `<button class="rk-row" data-k="${cat.k}" ${c ? '' : 'disabled'}><div class="cat">${esc(cat.label)}<small>${esc(cat.sub)}</small></div><span class="rank" style="color:var(--muted)">?</span></button>`;
+    }).join('') + `<div class="rk-total"><span>Summe der Plätze</span><b>${sum()}</b></div>`;
+    const again = document.getElementById('r-again'); if (again) again.onclick = start;
+    document.querySelectorAll('#r-list button.rk-row').forEach(b => b.onclick = () => { assign[b.dataset.k] = picks[idx]; idx++; if (idx === 8) finish(); render(b.dataset.k); });
+  }
+  function optimal() {
+    // assignment by DP over subsets of categories
+    const n = 8, INF = 1e9, dp = new Array(1 << n).fill(INF), from = new Array(1 << n).fill(-1); dp[0] = 0;
+    for (let m = 0; m < 1 << n; m++) {
+      if (dp[m] === INF) continue;
+      const i = popcount(m); if (i >= n) continue;
+      for (let j = 0; j < n; j++) if (!(m & 1 << j)) {
+        const v = dp[m] + RANKS[cats[j].k].get(picks[i].code);
+        if (v < dp[m | 1 << j]) { dp[m | 1 << j] = v; from[m | 1 << j] = j; }
+      }
+    }
+    let m = (1 << n) - 1; const res = [];
+    while (m) { const j = from[m]; const i = popcount(m) - 1; res[i] = cats[j]; m &= ~(1 << j); }
+    return { total: dp[(1 << n) - 1], res };
+  }
+  function popcount(m) { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; }
+  let opt;
+  function finish() {
+    opt = optimal();
+    const s = sum(), b = store.get('rankle:best', null);
+    if (b == null || s < b) store.set('rankle:best', s);
+    document.getElementById('r-best').textContent = store.get('rankle:best', '–');
+  }
+  function resultCard() {
+    const s = sum();
+    return `<div class="rk-country"><div class="coords">Ergebnis</div><b style="font-size:54px">${s}</b>
+      <p class="facts" style="margin:0">Bestmögliche Summe: ${opt.total}${s === opt.total ? ' – perfekt gelöst!' : ''}</p>
+      <table class="opt">${picks.map((c, i) => `<tr><td>${esc(c.name)}</td><td>${esc(opt.res[i].label)}</td><td>#${RANKS[opt.res[i].k].get(c.code)}</td></tr>`).join('')}</table>
+      <button class="btn primary" id="r-again">Neue Runde</button></div>`;
+  }
+  start();
+}
+
+/* ---------- USA ---------- */
+const US_DE = { California: 'Kalifornien' };
+const US_ALIAS = { 'New Mexico': ['Neumexiko', 'Neu-Mexiko'], 'North Carolina': ['Nord-Carolina', 'Nordcarolina'], 'South Carolina': ['Süd-Carolina', 'Südcarolina'], 'North Dakota': ['Norddakota', 'Nord-Dakota'], 'South Dakota': ['Süddakota', 'Süd-Dakota'], 'Pennsylvania': ['Pennsylvanien'], 'Virginia': ['Virginien'], 'West Virginia': ['Westvirginia', 'West-Virginia', 'Westvirginien'], 'New York': ['New York State'], 'Hawaii': ['Hawai'], 'Washington': ['Washington State'] };
+function usa() {
+  const path = d3.geoPath();
+  const feats = topojson.feature(us, us.objects.states).features;
+  const states = feats.filter(f => f.properties.name !== 'District of Columbia').map(f => {
+    const en = f.properties.name, label = US_DE[en] || en;
+    const keys = [...new Set([en, label, ...(US_ALIAS[en] || [])].flatMap(n => [norm(n), norm(umlautAlt(n))]))];
+    return { id: f.id, en, label, keys, words: label.split(/\s+/).map(norm), f, area: path.area(f) };
+  });
+  const byId = Object.fromEntries(states.map(s => [s.id, s]));
+  const st = Object.assign({ mode: 'name' }, store.get('usa:settings', {}));
+  let queue, idx, score, phase, current, found, timer, t0, ac;
+
+  app.innerHTML = `
+    <div class="game-head">
+      <div><h1>USA-Staaten</h1><p id="u-intro"></p></div>
+      <div class="stats"><div class="stat"><span id="u-l1">Runde</span><b id="u-prog">–</b></div><div class="stat"><span>Punkte</span><b id="u-score">0</b></div><div class="stat"><span id="u-l3">Rekord</span><b id="u-best">–</b></div></div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Spielart"><button data-m="name">Benennen</button><button data-m="find">Finden</button><button data-m="all">Alle 50</button></div>
+      <span class="spacer"></span><button class="btn ghost" id="u-restart">Neu starten</button>
+    </div>
+    <div class="stage us-stage" id="u-stage"><svg viewBox="-10 -10 985 630" id="u-svg">
+      ${feats.map(f => `<path class="st${f.properties.name === 'District of Columbia' ? ' dc' : ''}" data-id="${f.id}" d="${path(f)}"><title>${f.properties.name === 'District of Columbia' ? 'Washington, D.C.' : ''}</title></path>`).join('')}
+      <g id="u-labels"></g></svg></div>
+    <div class="dock" id="u-dock"></div>`;
+  const svgEl = document.getElementById('u-svg');
+  const segs = app.querySelectorAll('.seg button');
+  segs.forEach(b => b.onclick = () => { st.mode = b.dataset.m; store.set('usa:settings', st); start(); });
+  document.getElementById('u-restart').onclick = start;
+  svgEl.addEventListener('click', e => { const p = e.target.closest('path.st:not(.dc)'); if (p && st.mode === 'find' && phase === 'ask') clickState(byId[p.dataset.id]); });
+
+  const paint = (id, cls) => { const p = svgEl.querySelector(`path[data-id="${id}"]`); if (p) p.setAttribute('class', 'st' + (cls ? ' ' + cls : '')); };
+  const resetPaint = () => svgEl.querySelectorAll('path.st:not(.dc)').forEach(p => p.setAttribute('class', 'st'));
+  const label = s => { const [x, y] = path.centroid(s.f); document.getElementById('u-labels').insertAdjacentHTML('beforeend', s.area > 900 ? `<text class="us-label" x="${x}" y="${y + 3}">${esc(s.label)}</text>` : ''); };
+  const bestKey = () => 'usa:best:' + st.mode;
+
+  function start() {
+    clearInterval(timer);
+    segs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === st.mode)));
+    resetPaint(); document.getElementById('u-labels').innerHTML = '';
+    svgEl.parentElement.classList.toggle('clickable', st.mode === 'find');
+    queue = shuffle(states); idx = 0; score = 0; found = new Set();
+    const best = store.get(bestKey(), null);
+    document.getElementById('u-best').textContent = best == null ? '–' : (st.mode === 'all' ? best + '/50' : best);
+    document.getElementById('u-intro').textContent = {
+      name: 'Ein Staat ist gelb markiert. Tippe seinen Namen ein.',
+      find: 'Ein Staat wird genannt. Klicke ihn auf der Karte an.',
+      all: 'Tippe so viele Staaten wie möglich. Richtige Namen werden sofort eingetragen. 10 Minuten Zeit.'
+    }[st.mode];
+    document.getElementById('u-l1').textContent = st.mode === 'all' ? 'Zeit' : 'Runde';
+    if (st.mode === 'all') startAll(); else ask();
+  }
+  function stats() {
+    if (st.mode !== 'all') document.getElementById('u-prog').textContent = `${Math.min(idx + 1, 50)}/50`;
+    document.getElementById('u-score').textContent = st.mode === 'all' ? `${found.size}/50` : score;
+  }
+  function ask() {
+    phase = 'ask'; current = queue[idx]; stats();
+    const dock = document.getElementById('u-dock');
+    if (st.mode === 'name') {
+      paint(current.id, 'target');
+      dock.innerHTML = `<div class="answer-row"><div id="u-ac" style="flex:1;min-width:0"></div><button class="btn ghost" id="u-skip">Weiß ich nicht</button></div>`;
+      ac = autocomplete(document.getElementById('u-ac'), states, s => answer(s), { placeholder: 'Welcher Staat ist das?', up: true });
+      ac.focus();
+    } else {
+      dock.innerHTML = `<div class="answer-row" style="align-items:center"><div class="us-prompt">Wo liegt <span style="color:var(--teal)">${esc(current.label)}</span>?</div><span class="spacer"></span><button class="btn ghost" id="u-skip">Zeig es mir</button></div>`;
+    }
+    document.getElementById('u-skip').onclick = () => answer(null);
+  }
+  function clickState(s) { answer(s); }
+  function answer(g) {
+    if (phase !== 'ask') return; phase = 'feedback';
+    const ok = g === current;
+    if (ok) score++;
+    paint(current.id, ok ? 'found' : 'missed');
+    if (g && !ok) paint(g.id, 'guess');
+    label(current); stats();
+    const last = idx >= 49;
+    const dock = document.getElementById('u-dock');
+    dock.innerHTML = `<div class="feedback${ok ? '' : ' bad'}"><div class="txt"><b>${ok ? 'Richtig! ' : ''}${esc(current.label)}</b><span>${ok ? '' : g ? `Deine Antwort: ${esc(g.label)}` : 'Übersprungen'}</span></div><button class="btn primary" id="u-next">${last ? 'Ergebnis' : 'Weiter'} →</button></div>`;
+    const nx = document.getElementById('u-next');
+    nx.onclick = () => {
+      if (g && !ok) paint(g.id, found.has(g.id) ? 'found' : '');
+      if (last) return finish();
+      idx++; ask();
+    };
+    if (ok) found.add(current.id);
+    nx.focus({ preventScroll: true });
+  }
+  function finish() {
+    phase = 'done';
+    const b = store.get(bestKey(), null); if (b == null || score > b) store.set(bestKey(), score);
+    document.getElementById('u-best').textContent = store.get(bestKey());
+    document.getElementById('u-dock').innerHTML = `<div class="feedback"><div class="txt"><b>${score} von 50 richtig</b><span>Grün: gewusst · Rot: verpasst</span></div><button class="btn primary" id="u-again">Nochmal</button></div>`;
+    document.getElementById('u-again').onclick = start;
+  }
+  function startAll() {
+    phase = 'all'; t0 = Date.now(); const LIMIT = 600;
+    const dock = document.getElementById('u-dock');
+    dock.innerHTML = `<div class="answer-row"><div class="ac" style="flex:1;min-width:0"><input id="u-all" type="text" autocomplete="off" spellcheck="false" placeholder="Staat eintippen …" aria-label="Staat eintippen"></div><button class="btn ghost" id="u-give">Aufgeben</button></div><div class="found-list" id="u-found"></div>`;
+    const input = document.getElementById('u-all');
+    input.focus({ preventScroll: true });
+    input.addEventListener('input', () => {
+      const n = norm(input.value);
+      const s = states.find(s => !found.has(s.id) && s.keys.includes(n));
+      if (s) { found.add(s.id); paint(s.id, 'found'); label(s); input.value = ''; stats(); listFound(); if (found.size === 50) endAll(); }
+    });
+    document.getElementById('u-give').onclick = endAll;
+    const tick = () => {
+      const left = Math.max(0, LIMIT - Math.floor((Date.now() - t0) / 1000));
+      document.getElementById('u-prog').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+      if (!left) endAll();
+    };
+    tick(); timer = setInterval(tick, 500); stats(); listFound();
+  }
+  function listFound(missed) {
+    const el = document.getElementById('u-found'); if (!el) return;
+    const f = states.filter(s => found.has(s.id)).sort((a, b) => a.label.localeCompare(b.label));
+    el.innerHTML = f.map(s => `<span>${esc(s.label)}</span>`).join('') + (missed || []).map(s => `<span class="miss">${esc(s.label)}</span>`).join('');
+  }
+  function endAll() {
+    if (phase !== 'all') return; phase = 'done'; clearInterval(timer);
+    const missed = states.filter(s => !found.has(s.id)).sort((a, b) => a.label.localeCompare(b.label));
+    missed.forEach(s => paint(s.id, 'missed'));
+    const b = store.get(bestKey(), null); if (b == null || found.size > b) store.set(bestKey(), found.size);
+    document.getElementById('u-best').textContent = store.get(bestKey()) + '/50';
+    const secs = Math.floor((Date.now() - t0) / 1000);
+    const dock = document.getElementById('u-dock');
+    dock.innerHTML = `<div class="feedback${found.size === 50 ? '' : ' bad'}"><div class="txt"><b>${found.size} von 50 Staaten</b><span>in ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} Minuten${missed.length ? ' · Rot markiert: verpasst' : ''}</span></div><button class="btn primary" id="u-again">Nochmal</button></div><div class="found-list" id="u-found"></div>`;
+    listFound(missed);
+    document.getElementById('u-again').onclick = start;
+  }
+  start();
+  return () => clearInterval(timer);
+}
+
+/* ---------- router ---------- */
+let cleanup = null;
+function route() {
+  if (cleanup) { cleanup(); cleanup = null; }
+  const r = location.hash.slice(1);
+  document.querySelectorAll('#tabs a').forEach(a => { if (a.getAttribute('href') === '#' + r) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  window.scrollTo(0, 0);
+  if (r === 'flaggen') quiz({
+    key: 'flaggen', title: 'Flaggen', stageClass: 'stage-flag plain', pool: countries,
+    intro: 'Zu welchem Land gehört diese Flagge?',
+    show(stage, c) { stage.innerHTML = `<img src="${c.flagUrl}" alt="Flagge eines Landes">`; }
+  });
+  else if (r === 'karte') mapQuiz();
+  else if (r === 'umriss') quiz({
+    key: 'umriss', title: 'Umrisse', stageClass: 'stage-outline plain', pool: mapCountries,
+    intro: 'Welches Land hat diese Form? Weit entfernte Inseln und Überseegebiete sind weggelassen.',
+    show(stage, c) { stage.innerHTML = outlineSvg(c.code, 420); },
+    reveal(stage, c, g, ok) { stage.querySelector('path').setAttribute('class', 'silhouette ' + (ok ? 'ok' : 'bad')); }
+  });
+  else if (r === 'grid') geoGrid();
+  else if (r === 'rankle') rankle();
+  else if (r === 'usa') cleanup = usa();
+  else home();
+}
+window.addEventListener('hashchange', route);
+route();
+})();
+</script>
